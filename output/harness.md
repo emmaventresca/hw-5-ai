@@ -315,10 +315,13 @@ Visual rationale is in `output/design.md`.
 
 ## Verified Full Run
 
-One clean run of all three tickets, starting from a reset working database.
+One clean run of all three tickets, started from a reset working database and driven through the
+React board. Five Pydantic AI agents on **gpt-6-luna**, every figure fetched through a live MCP
+`tools/call`.
 
 | | |
 | --- | --- |
+| Engine | `pydantic-ai` · model `gpt-6-luna` |
 | Shop date | 2026-08-31 |
 | Starting checking balance | **$3,400.00** |
 | Ticket 101 | Resolved — vendor payment, invoice 501, −$840.00 → $2,560.00 |
@@ -326,14 +329,27 @@ One clean run of all three tickets, starting from a reset working database.
 | Ticket 103 | Resolved — quote only, no cash → $160.00 |
 | Ending checking balance | **$160.00** |
 | Human approvals required | 2 |
+| MCP tools called | 9 of 10 |
 
 `$3,400.00 − $840.00 − $2,400.00 = $160.00`, which matches `cash_accounts.balance` and the two
 rows in `payments`.
 
-Routing matched the plan on all three tickets. Tools matched on 101 and 102. On 103,
-`get_open_invoices_for_vendor` was missing from the first implementation and was added — it
-matters because the hoodie restock comes from the same vendor holding invoice 501, so without
-it the agent would promise a lead time it could not honour.
+### Delegation recorded on this run
+
+- `Boss` asked `Accounting`
+- `Boss` asked `Customer Service`
+- `Boss` asked `Facilities`
+- `Boss` asked `Inventory`
+- `Customer Service` asked `Accounting`
+- `Customer Service` asked `Boss`
+- `Inventory` asked `Accounting`
+- `Inventory` asked `Boss`
+- `Inventory` asked `Customer Service`
+
+Agents are live, so the path is not identical between runs — on different runs the Boss reaches
+Customer Service first, or routes Accounting through Inventory rather than directly. What does not
+vary is the money: the backend re-reads every proposed amount from the database and refuses to let
+a ticket close over an unmet obligation, so every run lands on **$160.00**.
 
 Full detail: `output/desk_tickets.html` (expected vs. actual, cash ledger, reflection),
 `output/resolved_tickets.json`, `output/resolved_board.html`, `output/audit_trail.json`.

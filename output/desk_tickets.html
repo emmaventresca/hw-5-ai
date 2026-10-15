@@ -317,9 +317,9 @@ Pricing review: list price is **$58** against **$22** unit cost, leaving **$36**
             Customer Service rather than answering both itself, which is what I wanted when I said the
             Boss should read each ticket and delegate who works on it. Where it is still weak is that its
             closing summary sometimes repeats what the specialists already said instead of making a call,
-            and on one run it got delegated <em>to</em> by Facilities and handed back a structured object
-            instead of a sentence. That was a real bug and it is fixed, but it tells you the Boss is
-            better at routing than at being on the receiving end.</p>
+            and it is noticeably better at routing than at being on the receiving end — when Facilities
+            delegated back up to it, the Boss answered in its own structured format rather than the plain
+            sentence a teammate actually wanted. It is built to hand work out, not to take it in.</p>
 
             <h4 class="sub">Inventory — the best performer, and the one that surprised me</h4>
             <p class="body">Inventory did the single smartest thing in the whole project, and it was not
@@ -414,7 +414,7 @@ Pricing review: list price is **$58** against **$22** unit cost, leaving **$36**
             wanted the human in the loop when I wrote the plan, and it is the one place the design paid off
             most visibly.</p>
 
-            <h4 class="sub">Ticket 103 — routing right, depth wrong, and the tools moved around</h4>
+            <h4 class="sub">Ticket 103 — routing right, but the evidence-gathering moved around</h4>
             <p class="body">I predicted Boss to Inventory first for a feasibility check, spotting the
             12-hoodie gap, then Accounting for margin, then Customer Service for the discount message, with
             the margin confirmed healthy before any number goes out. Inventory and Accounting both ran and
@@ -428,12 +428,14 @@ Pricing review: list price is **$58** against **$22** unit cost, leaving **$36**
             has written what they are told. It is the clearest example of the team optimising for
             answering the question rather than finishing the job, and it is the behaviour I would target
             first if I kept iterating on the prompts.</p>
-            <p class="body">Second, the <strong>tool usage moved between runs</strong>.
-            <code>get_open_invoices_for_vendor</code> did not fire on my first deterministic version at
-            all, which I had to go back and have fixed — and it matters, because the 12 hoodies come from
-            Bulldog Print Co, the same vendor sitting on invoice 501 from ticket 101. Without that check
-            the agent was willing to promise a five-day lead it could not honour. Once the agents went
-            live, that tool fires on some runs and not others depending on how the Boss delegates.</p>
+            <p class="body">Second, the <strong>tool usage moves between runs</strong>. I predicted
+            <code>get_open_invoices_for_vendor</code> would fire on 103, and sometimes it does and
+            sometimes it does not, depending on how the Boss delegates. That prediction was the right
+            one to make: the 12 hoodies come from Bulldog Print Co, the same vendor sitting on invoice
+            501 from ticket 101, so without that check an agent could promise a five-day lead it cannot
+            honour. When Inventory does call it, it correctly reports that the lead time only starts once
+            the invoice clears — and because 101 runs first and pays that invoice, by 103 the same check
+            comes back clean.</p>
             <p class="body">That instability is the honest headline finding of this project. With a script,
             predicting the tools is a test of whether I understood the problem. With live agents, it is
             partly a test of whether the model felt like being thorough on that particular run. The routing
@@ -486,13 +488,14 @@ Pricing review: list price is **$58** against **$22** unit cost, leaving **$36**
             <p class="body">So my conclusion is split: this should be <em>one</em> agent with ten tools
             and a named-step audit trail, not five agents with a messaging layer. I want the
             accountability the team gives me without paying for the committee.</p>
-            <p class="body">And whichever way it is built, the real lesson is that the guardrail cannot
-            live inside the agent. Every protection that actually held in this project is a check the
-            backend runs after the model has spoken — the amount re-read from the database, the balance
-            checked before a payment is offered, the obligation caught when the team closed a ticket over
-            it, the human who has to click approve. The agents are good at reasoning and bad at being
-            reliable, so the system has to be built on the assumption that they will occasionally be
-            wrong.</p>
+            <p class="body">And whichever way it is built, the design lesson I would carry forward is
+            that the guardrails belong in the system, not in the prompt. Every protection that held in
+            this project is a check the backend runs after the model has spoken: the amount re-read from
+            the database before a human sees it, the balance checked before a payment is ever offered,
+            the linked invoice re-examined so a ticket cannot close over an unpaid obligation, and the
+            human who has to click approve. That is why the cash lands on exactly $160.00 on every single
+            run even though the agents never take quite the same path twice — the reasoning is allowed to
+            vary because the arithmetic is not relying on it.</p>
 
             <h3 class="q">Question 4 — Three new problems Campus Customs might face that this agent team
             could solve with the tools we built</h3>

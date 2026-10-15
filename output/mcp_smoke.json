@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-14T21:08:03.533027",
+  "generated_at": "2026-10-14T22:08:03.490138",
   "transport": {
     "type": "stdio",
     "protocol": "JSON-RPC 2.0",
@@ -12,6 +12,7 @@
       "get_inventory_stock",
       "get_open_invoices_for_vendor",
       "get_lease_details",
+      "get_desk_today",
       "get_tickets",
       "get_vendors",
       "get_cash_balance",
@@ -21,10 +22,27 @@
     ]
   },
   "database": "data/campus_customs_new.db",
-  "method": "Each tool was called over the live MCP stdio transport and each result cross-checked against a direct SQL read of the same database. The FastAPI backend uses this same transport at runtime: backend/mcp_client.py spawns the server and every agent fact comes from a tools/call round trip.",
+  "method": "Each tool was called over the live MCP stdio transport and each result cross-checked against a direct SQL read of the same database. The Pydantic AI agents use this same transport at runtime: backend/mcp_client.py spawns the server and every agent fact comes from a tools/call round trip.",
   "mcp_smoke_tests": [
     {
       "test_number": 1,
+      "prompt": "What is today's date at the shop? (Needed before judging anything overdue)",
+      "tool_name": "get_desk_today",
+      "tool_input": {},
+      "tool_output": {
+        "date_today": "2026-08-31",
+        "notes": null,
+        "found": true
+      },
+      "sql_crosscheck": {
+        "query": "SELECT date_today FROM desk",
+        "value": "2026-08-31"
+      },
+      "database_verified": true,
+      "notes": "Added after a live run: Facilities reported it could not confirm today's date and so could not say whether rent was overdue. The shop's whole overdue rule depends on this value."
+    },
+    {
+      "test_number": 2,
       "prompt": "How many CC-TEE-WHITE size S do we have? (Ticket 101, Tauhid Zaman's order)",
       "tool_name": "get_inventory_stock",
       "tool_input": {
@@ -47,7 +65,7 @@
       "notes": "Returns 0, the shortfall that starts ticket 101. Inventory calls this first."
     },
     {
-      "test_number": 2,
+      "test_number": 3,
       "prompt": "What open invoices does Bulldog Print Co have? (Gates tickets 101 and 103)",
       "tool_name": "get_open_invoices_for_vendor",
       "tool_input": {
@@ -75,7 +93,7 @@
       "notes": "Invoice 501 for $840.00 is overdue and blocks the reprint on both apparel tickets."
     },
     {
-      "test_number": 3,
+      "test_number": 4,
       "prompt": "What are the Chapel Street lease terms? (Ticket 102)",
       "tool_name": "get_lease_details",
       "tool_input": {
@@ -98,7 +116,7 @@
       "notes": "$2,400.00 due 2026-09-02, which Facilities hands to Accounting."
     },
     {
-      "test_number": 4,
+      "test_number": 5,
       "prompt": "What is on the board right now?",
       "tool_name": "get_tickets",
       "tool_input": {},
@@ -151,10 +169,10 @@
         "value": 3
       },
       "database_verified": true,
-      "notes": "Boss opens every run with this call to decide routing."
+      "notes": "The Boss is required to call this before it may delegate."
     },
     {
-      "test_number": 5,
+      "test_number": 6,
       "prompt": "Which vendors can we use and how fast are they?",
       "tool_name": "get_vendors",
       "tool_input": {},
@@ -189,7 +207,7 @@
       "notes": "Bulldog Print Co is the only apparel reprint vendor, at 5 days."
     },
     {
-      "test_number": 6,
+      "test_number": 7,
       "prompt": "What is in checking?",
       "tool_name": "get_cash_balance",
       "tool_input": {},
@@ -206,7 +224,7 @@
       "notes": "Read live before any payment memo. Ticket 102 sees the post-101 balance, not the opening one."
     },
     {
-      "test_number": 7,
+      "test_number": 8,
       "prompt": "Show the whole lease portfolio.",
       "tool_name": "get_all_leases",
       "tool_input": {},
@@ -231,7 +249,7 @@
       "notes": "Facilities checks whether another rent lands in the same window."
     },
     {
-      "test_number": 8,
+      "test_number": 9,
       "prompt": "What is the cost and list price on CC-HOOD-NAVY? (Ticket 103 margin work)",
       "tool_name": "get_pricing",
       "tool_input": {
@@ -251,17 +269,17 @@
         "value": 22.0
       },
       "database_verified": true,
-      "notes": "margin_percent is measured against list price, not cost. Dividing by cost gives markup (163.6%) and would badly mis-price a discount; both are now returned separately."
+      "notes": "margin_percent is measured against list price, not cost. Dividing by cost gives markup (163.6%) and would badly mis-price a discount; both are returned separately."
     }
   ],
   "summary": {
-    "tools_advertised": 9,
-    "tools_called": 8,
-    "verified_against_database": 8,
+    "tools_advertised": 10,
+    "tools_called": 9,
+    "verified_against_database": 9,
     "all_passed": true,
     "not_called": {
       "tool": "log_payment",
-      "reason": "Write tool. Calling it here would move real money, so it is excluded from a read-only smoke test. It is exercised end to end by POST /approve-payment, which calls it over this same MCP transport during the full three-ticket run."
+      "reason": "Write tool, and deliberately not registered on any agent. Calling it here would move real money, so it is excluded from a read-only smoke test. It is exercised end to end by POST /approve-payment over this same transport."
     }
   }
 }

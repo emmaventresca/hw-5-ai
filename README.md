@@ -108,6 +108,31 @@ Open **http://localhost:5173**. The backend already allows that origin via CORS.
 
 ---
 
+## What to expect when you run it
+
+**The agents are live, so no two runs look the same.** They are real Pydantic AI
+agents on `gpt-6-luna`, not a script. On one run the Boss asks Inventory first;
+on another it starts with Customer Service, or reaches Accounting through
+Inventory rather than directly. The wording differs every time, and which MCP
+tools get called varies with the routing. That is expected behaviour, not a
+fault — `output/desk_tickets.html` compares a recorded run against the plan
+written beforehand and works through where they diverged and why.
+
+**The money does not vary.** The backend never trusts the model with
+arithmetic: a proposed amount is re-read from the database before a human sees
+it, a payment larger than the balance is refused, and a ticket cannot close
+while its linked invoice or lease is still unpaid. So however the agents route
+themselves, a full run always lands on:
+
+```
+$3,400.00  →  $2,560.00  →  $160.00
+```
+
+**You need your own key.** Put an `OPENAI_API_KEY` in `.env` to run the real
+agents. Without one the backend falls back to a deterministic path that still
+calls every MCP tool and still produces the same $160.00 — the `/run-ticket`
+response reports which engine ran, so you can always tell.
+
 ## A full three-ticket run
 
 1. Reset the database (step 1 above), so you start from **$3,400.00**.

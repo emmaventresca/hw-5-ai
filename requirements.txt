@@ -3,10 +3,17 @@
 #   python3 -m venv .venv && source .venv/bin/activate
 #   pip install -r requirements.txt
 
+# Backend
 fastapi==0.143.0
 uvicorn==0.54.0
 pydantic==2.14.1
 
-# Used by the MCP server entry point and any Portkey-backed prompt work
+# The agent team. pydantic-ai-slim with just the openai provider keeps this
+# installable everywhere: the full pydantic-ai pulls in cryptography, which
+# needs a Rust toolchain to build on machines without a prebuilt wheel.
+pydantic-ai-slim[openai]==2.54.0
+openai==3.31.0
+
+# Config and the MCP smoke tests
 python-dotenv==1.2.4
 requests==2.34.2

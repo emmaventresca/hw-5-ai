@@ -14,6 +14,9 @@ from pathlib import Path
 from datetime import datetime
 
 from backend.mcp_client import ToolRecorder, mcp, MCPError
+from backend.agents import AgentUnavailable, llm_available
+from backend.agent_runner import run_agent_team
+from backend.agents import MODEL_NAME
 
 app = FastAPI(title="Campus Customs Backend")
 
@@ -436,7 +439,28 @@ def run_ticket(ticket_id: int):
 
         today = conn.execute("SELECT date_today FROM desk").fetchone()["date_today"]
         try:
-            events, pending = orchestrate(ticket, today)
+            if llm_available():
+                try:
+                    events, pending = run_agent_team(ticket, today, money, days_until)
+                    engine = "pydantic-ai"
+                except AgentUnavailable as exc:
+                    # The model could not be reached. Say so in the trail and fall
+                    # back to the deterministic path rather than returning nothing.
+                    append_audit_event({
+                        "timestamp": datetime.now().isoformat(),
+                        "agent": "System",
+                        "action": "Model unavailable",
+                        "ticket_id": ticket_id,
+                        "tools_used": [],
+                        "output": f"gpt-6-luna could not be reached ({exc}). Falling back to "
+                                  f"the deterministic MCP path for this ticket.",
+                        "status": "degraded",
+                    })
+                    events, pending = orchestrate(ticket, today)
+                    engine = "deterministic-fallback"
+            else:
+                events, pending = orchestrate(ticket, today)
+                engine = "deterministic"
         except MCPError as exc:
             raise HTTPException(
                 status_code=503,
@@ -452,6 +476,8 @@ def run_ticket(ticket_id: int):
         return {
             "ticket_id": ticket_id,
             "status": "awaiting_approval" if pending else "resolved",
+            "engine": engine,
+            "model": MODEL_NAME if engine.startswith("pydantic") else None,
             "events": events,
             "pending_approval": pending,
         }
@@ -551,6 +577,7 @@ def approve_payment(payment: PaymentApproval):
                 "tools_used": [],
                 "output": f"{payment.approved_by} approved {money(payment.amount)} ({payment.kind}, ref {payment.ref_id}).",
                 "status": "approved",
+                "engine": "human",
             },
             {
                 "timestamp": datetime.now().isoformat(),
@@ -561,6 +588,7 @@ def approve_payment(payment: PaymentApproval):
                 "output": f"Paid from checking. Balance {money(current_balance)} to {money(new_balance)}."
                           + (f" Invoice {payment.ref_id} marked paid." if payment.kind == "vendor_payment" else ""),
                 "status": "complete",
+                "engine": "backend",
             },
         ])
 

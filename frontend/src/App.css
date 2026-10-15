@@ -889,3 +889,16 @@
 .table tbody tr.is-selected { box-shadow: inset 3px 0 0 var(--navy); }
 
 .detail { border-top-color: var(--navy); }
+
+/* Who asked for this step, when one agent delegates to another. */
+.log-from {
+  margin-left: 7px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--live-bg);
+  color: var(--live-fg);
+  font-size: 9.5px;
+  letter-spacing: 0.4px;
+  text-transform: none;
+  white-space: nowrap;
+}

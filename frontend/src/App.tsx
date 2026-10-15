@@ -28,6 +28,8 @@ type AgentEvent = {
   status: string
   draft?: Draft | null
   math?: MathRow[] | null
+  delegated_by?: string | null
+  engine?: string | null
 }
 
 type Pending = {
@@ -402,7 +404,12 @@ export default function App() {
                     </span>
                     <span className="log-time">{clock(e.timestamp)}</span>
                   </div>
-                  <p className="log-action">{e.action}</p>
+                  <p className="log-action">
+                    {e.action}
+                    {e.delegated_by && (
+                      <span className="log-from">asked by {e.delegated_by}</span>
+                    )}
+                  </p>
                   <p className="log-output">{e.output}</p>
                   {e.tools_used.length > 0 && (
                     <p className="log-tools">

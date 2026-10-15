@@ -292,7 +292,23 @@ Tables: `desk`, `tickets`, `inventory`, `pricing`, `vendors`, `leases`, `cash_ac
 - Non-unilateral action guardrails (no auto-approvals, no direct contact)
 - Audit trail expectations (what gets logged and why)
 
-**Status:** ✓ Q5 Prompts Complete — Ready for orchestration/agent loop implementation
+**Implementation (completed later, after Q11 review):** The team is built with
+**Pydantic AI** in `backend/agents.py`, five agents all running on **`gpt-6-luna`**
+through the OpenAI-compatible endpoint. Each agent's system prompt is the markdown
+file above, loaded verbatim at runtime.
+
+- **Full connectivity.** Every agent carries `ask_teammate(agent_name, question)`
+  listing all five names, so any agent can ask any other. A recorded run shows
+  **Inventory → Accounting**, not just Boss fan-out.
+- **Boss reads first.** `ask_teammate` refuses for the Boss until `get_tickets` has
+  been called, so the routing decision is always made from the board itself.
+- **No second data layer.** The agents' tools are thin pass-throughs to the MCP
+  server; nothing reads the database directly.
+- **Agents cannot move money.** `log_payment` is not registered on any agent, and a
+  proposed amount is re-read from the database before a human is asked to approve it.
+
+**Status:** ✓ Q5 complete — prompts written in the user's own words, and the team
+implemented with Pydantic AI and verified on a live three-ticket run.
 
 ---
 

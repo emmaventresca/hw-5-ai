@@ -7,10 +7,12 @@ an actual tools/call round trip, so the tool names recorded in the audit trail
 are evidence of calls that happened rather than labels.
 """
 
+import contextvars
 import json
 import subprocess
 import sys
 import threading
+from contextlib import contextmanager
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -119,6 +121,15 @@ class MCPClient:
 mcp = MCPClient()
 
 
+#
+# Agents may delegate concurrently, so attribution cannot be a before/after
+# diff on one shared list. Each delegated run gets its own context-local
+# bucket; contextvars propagate into async tasks, so concurrent delegations
+# never collect each other's calls.
+#
+_bucket: contextvars.ContextVar = contextvars.ContextVar("mcp_tool_bucket", default=None)
+
+
 class ToolRecorder:
     """
     Wraps the client for one ticket run so each agent step records exactly the
@@ -131,11 +142,31 @@ class ToolRecorder:
 
     def call(self, name, **arguments):
         value = self._client.call(name, **arguments)
-        if name not in self._used:
-            self._used.append(name)
+        target = _bucket.get()
+        if target is None:
+            target = self._used
+        if name not in target:
+            target.append(name)
         return value
+
+    def seen(self):
+        """Tools called since the last take(), without resetting."""
+        return tuple(self._used)
 
     def take(self):
         """Return the tools called since the last take() and reset."""
         used, self._used = self._used, []
         return used
+
+    @contextmanager
+    def scope(self):
+        """
+        Collect tool calls made inside this block separately, so one delegated
+        agent's calls are never attributed to another.
+        """
+        own: list = []
+        token = _bucket.set(own)
+        try:
+            yield own
+        finally:
+            _bucket.reset(token)

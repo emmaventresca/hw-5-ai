@@ -90,6 +90,11 @@
 - **Tickets Unlocked:** 101, 102
 - **Purpose:** Writes the payment row after a human approves. Agents never call this on their own initiative — it runs behind `POST /approve-payment`, which is the only path that touches `cash_accounts`.
 
+### Tool 10: `get_desk_today`
+- **Tables Read:** desk
+- **Tickets Unlocked:** 101, 102
+- **Purpose:** Returns `desk.date_today`, the shop's current date (2026-08-31). Added after a live run exposed the gap: Facilities reported *"the tools available here do not expose Desk.date_today, so I can't confirm today's date"* and could not say whether rent was overdue. Without it an agent either guesses the date or refuses to judge urgency, and the shop's whole overdue rule depends on it.
+
 ### Transport and how the backend uses it
 
 `mcp_server/server.py` speaks the MCP stdio transport (JSON-RPC 2.0, protocol `2024-11-05`) and is registered in `.mcp.json` as `campus_customs`. It implements `initialize`, `tools/list`, `tools/call` and `ping` directly against the wire protocol, so it runs with no third-party dependencies.
@@ -98,7 +103,7 @@
 
 This is verifiable rather than asserted. Break `mcp_server/server.py` and `POST /run-ticket/{id}` returns **503** with a message naming the command to start the server; it cannot produce agent output without it. `GET /health` and `GET /tickets` keep working, which is correct — those are plain board reads, not agent findings.
 
-`POST /approve-payment` writes its payment row through the `log_payment` tool over the same transport, so all nine tools are exercised by a full three-ticket run. If the balance update that follows fails, the payment row is removed so `payments` can never disagree with `cash_accounts`.
+`POST /approve-payment` writes its payment row through the `log_payment` tool over the same transport, so all ten tools are exercised by a full three-ticket run. If the balance update that follows fails, the payment row is removed so `payments` can never disagree with `cash_accounts`.
 
 ### Two bugs this surfaced
 
@@ -147,6 +152,58 @@ This is verifiable rather than asserted. Break `mcp_server/server.py` and `POST 
 |------|---------------|---------|
 | `get_pricing` | pricing | Provide accurate prices in customer responses |
 | `draft_customer_response` | tickets, inventory | Compose replies; coordinate with other agents for accuracy |
+
+---
+
+## The Agent Team (Pydantic AI)
+
+Five agents built with **Pydantic AI**, all running on **`gpt-6-luna`**. Code in
+`backend/agents.py`; instructions in `backend/prompts/`, one markdown file per agent.
+
+| Agent | Owns | Delegates to |
+| --- | --- | --- |
+| **Boss** | Reads every ticket first, routes the work, makes the final call | Anyone |
+| **Inventory** | Stock counts, vendors, lead times, restock feasibility | Anyone |
+| **Accounting** | Cash, invoices, margins, prepares payments | Anyone |
+| **Facilities** | Leases, rent, the shop space | Anyone |
+| **Customer Service** | Drafts what the customer reads | Anyone |
+
+### Full connectivity
+
+Every agent carries an `ask_teammate(agent_name, question)` tool listing all five names,
+so any agent can ask any other for help. This is not Boss-only fan-out: a recorded run has
+**Inventory → Accounting**, where Inventory hit the vendor's unpaid invoice and handed the
+money question straight to Accounting rather than bouncing back through the Boss. Every
+delegation is written to the audit trail with a `delegated_by` field.
+
+Delegation depth is capped at 2 so the team cannot loop, and a run is capped at 30 model
+requests to keep a ticket inside the token budget.
+
+### The Boss reads first
+
+Per the shop's own rules the Boss reads the board before it routes anything. This is
+enforced structurally, not just asked for in the prompt: `ask_teammate` refuses for the
+Boss until `get_tickets` has been called, and tells it to read the board first.
+
+### Agents cannot move money
+
+`log_payment` is **not registered on any agent** (agents get the other nine). The team can only propose. The payment
+row is written by `POST /approve-payment` after a human clicks approve, and that route
+calls `log_payment` over the same MCP transport.
+
+### Proposed amounts are verified before a human sees them
+
+`backend/agent_runner.py` takes the Boss's structured `TicketResolution`, re-reads the
+named invoice or lease through MCP, and uses the **database** figure. If the model's
+number disagreed, the approval records `amount_corrected: true`. A hallucinated figure
+cannot reach the cash path, and an amount larger than the balance is refused outright.
+
+### Degraded mode
+
+If `OPENAI_API_KEY` is absent or the model cannot be reached, the backend writes a
+`Model unavailable` event to the audit trail and falls back to a deterministic path that
+still calls every MCP tool. The `/run-ticket` response reports which engine ran
+(`pydantic-ai`, `deterministic-fallback`, or `deterministic`), so a reader can always tell.
 
 ---
 

@@ -78,10 +78,18 @@ caps, the full sentence the backend produced, and the MCP tools it called as
 monospace chips. The chips are the audit trail made visible — you can see
 `get_lease_details` fire and know the number came from the database.
 
+When one agent delegates to another, the entry carries a small **asked by
+Boss** / **asked by Inventory** chip next to the action. That one detail turns
+the feed from a list of things that happened into a visible chain of command —
+you can see Inventory hit the vendor's unpaid invoice and hand the money
+question straight to Accounting.
+
 Entries appear one at a time, about 700ms apart. The content is exactly what
 `POST /run-ticket` returned in a single response; only the *pacing* is
 client-side, so you can actually watch the team think instead of having five
-paragraphs land at once. Nothing is invented to fill the delay.
+paragraphs land at once. Nothing is invented to fill the delay — the agents are
+real Pydantic AI agents on `gpt-6-luna`, and every figure in those sentences was
+fetched through an MCP `tools/call`.
 
 ## 8. Numbers behave like numbers
 

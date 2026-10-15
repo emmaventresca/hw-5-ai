@@ -40,6 +40,13 @@ Secrets go in a local, git-ignored `.env`:
 cp .env.example .env
 ```
 
+Then put your key in `.env`:
+
+```
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-6-luna
+```
+
 Then install the frontend:
 
 ```bash
@@ -126,6 +133,36 @@ $  160.00  ending balance
 
 ---
 
+## The agent team
+
+Five Pydantic AI agents, all running on **`gpt-6-luna`**, defined in
+`backend/agents.py`. Their instructions are the markdown files in
+`backend/prompts/`.
+
+**Every agent can delegate to every other agent.** Each one carries an
+`ask_teammate(agent_name, question)` tool, so Inventory can ask Accounting
+about a vendor's unpaid invoice without routing back through the Boss. Real
+delegations from a live run are in `output/audit_trail.json`, tagged with
+`delegated_by`.
+
+**The Boss reads the board first.** It is required to call `get_tickets`
+before it may delegate — the `ask_teammate` tool refuses and tells it to read
+the board. Only then does it route the work.
+
+**Agents cannot move money.** `log_payment` is deliberately not registered on
+any agent. The team can propose a payment; only `POST /approve-payment` writes
+one, and only after a human clicks approve.
+
+**A proposed amount is re-read from the database before a human ever sees it.**
+`backend/agent_runner.py` takes the Boss's structured resolution, looks the
+invoice or lease up again through MCP, and uses the database figure. If the
+model's number disagreed, the approval card records that it was corrected. A
+hallucinated amount cannot reach the cash path.
+
+If no `OPENAI_API_KEY` is set, the backend falls back to a deterministic path
+that still calls every MCP tool, so the board stays usable without a key — the
+response says which engine ran.
+
 ## How the agents get their facts
 
 The backend is a real MCP client, not a wrapper around its own SQL. `backend/mcp_client.py`
@@ -140,7 +177,7 @@ output at all. `GET /health` and `GET /tickets` still work, because those read t
 and are not agent findings.
 
 `POST /approve-payment` writes its payment row through the `log_payment` tool over the same
-transport, so a full three-ticket run exercises all nine tools.
+transport, so a full three-ticket run exercises all ten tools.
 
 ## API routes
 
@@ -184,11 +221,13 @@ data/
   campus_customs.db        Pristine original — never written to
   campus_customs_new.db    Working copy the agents modify
 mcp_server/
-  server.py                Nine tools over the shop database
+  server.py                Ten tools over the shop database
   README.md
 backend/
-  main.py                  FastAPI app, agent orchestration, seven routes
-  mcp_client.py            MCP stdio client the orchestration calls tools through
+  main.py                  FastAPI app, seven routes, deterministic fallback
+  agents.py                The five Pydantic AI agents and their delegation wiring
+  agent_runner.py          Runs the team on a ticket, verifies proposed payments
+  mcp_client.py            MCP stdio client every tool call goes through
   models.py
   prompts/                 One instruction file per agent
 frontend/                  React + Vite + TypeScript board

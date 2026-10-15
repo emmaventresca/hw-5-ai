@@ -1,5 +1,7 @@
 {
   "run": {
+    "engine": "pydantic-ai",
+    "model": "gpt-6-luna",
     "shop_date": "2026-08-31",
     "database": "data/campus_customs_new.db",
     "starting_checking_balance": 3400.0,
@@ -7,8 +9,8 @@
     "total_approved_payments": 3240.0,
     "human_approvals_required": 2,
     "mcp_tools_exercised": [
-      "get_all_leases",
       "get_cash_balance",
+      "get_desk_today",
       "get_inventory_stock",
       "get_lease_details",
       "get_open_invoices_for_vendor",
@@ -17,7 +19,7 @@
       "get_vendors",
       "log_payment"
     ],
-    "note": "Every fact in these events was fetched through a live MCP tools/call against mcp_server/server.py. The tool names are a record of calls that happened."
+    "note": "Five Pydantic AI agents on gpt-6-luna with full agent-to-agent delegation, driven through the React board. Every figure was fetched through a live MCP tools/call. No agent can write a payment, proposed amounts are re-read from the database, and a ticket cannot close over an unmet obligation."
   },
   "tickets": [
     {
@@ -29,44 +31,102 @@
       "outcome": "Vendor gate cleared and the reprint released. Invoice 501 paid, so Bulldog Print Co will ship. The customer was told the truth about the delay instead of a date we could not keep.",
       "agents": [
         {
-          "agent": "Boss",
+          "agent": "Customer Service",
           "actions": [
-            "Route ticket",
-            "Close out"
-          ],
-          "tools_used": [
-            "get_tickets"
-          ]
-        },
-        {
-          "agent": "Inventory",
-          "actions": [
-            "Check stock"
+            "Answer Boss",
+            "Answer Inventory"
           ],
           "tools_used": [
             "get_inventory_stock",
-            "get_vendors"
+            "get_desk_today",
+            "get_tickets",
+            "get_vendors",
+            "get_open_invoices_for_vendor"
+          ],
+          "delegated_by": [
+            "Boss",
+            "Inventory"
+          ]
+        },
+        {
+          "agent": "Boss",
+          "actions": [
+            "Answer Customer Service",
+            "Close out"
+          ],
+          "tools_used": [
+            "get_tickets",
+            "get_inventory_stock",
+            "get_open_invoices_for_vendor",
+            "get_desk_today"
+          ],
+          "delegated_by": [
+            "Customer Service"
           ]
         },
         {
           "agent": "Accounting",
           "actions": [
-            "Clear vendor gate",
+            "Answer Customer Service",
+            "Answer Inventory",
+            "Prepare payment",
             "Record payment"
           ],
           "tools_used": [
+            "get_desk_today",
+            "get_tickets",
+            "get_vendors",
             "get_open_invoices_for_vendor",
             "get_cash_balance",
-            "get_pricing",
             "log_payment"
+          ],
+          "delegated_by": [
+            "Customer Service",
+            "Inventory"
           ]
         },
         {
-          "agent": "Customer Service",
+          "agent": "Inventory",
           "actions": [
-            "Draft reply"
+            "Answer Boss"
           ],
-          "tools_used": []
+          "tools_used": [
+            "get_inventory_stock",
+            "get_tickets",
+            "get_vendors",
+            "get_desk_today",
+            "get_open_invoices_for_vendor",
+            "get_pricing"
+          ],
+          "delegated_by": [
+            "Boss"
+          ]
+        }
+      ],
+      "delegations": [
+        {
+          "from": "Boss",
+          "to": "Customer Service"
+        },
+        {
+          "from": "Customer Service",
+          "to": "Boss"
+        },
+        {
+          "from": "Customer Service",
+          "to": "Accounting"
+        },
+        {
+          "from": "Inventory",
+          "to": "Customer Service"
+        },
+        {
+          "from": "Inventory",
+          "to": "Accounting"
+        },
+        {
+          "from": "Boss",
+          "to": "Inventory"
         }
       ],
       "human_approvals": {
@@ -91,35 +151,57 @@
       "outcome": "Chapel Street rent paid two days before it was due, with a human releasing the cash.",
       "agents": [
         {
-          "agent": "Boss",
-          "actions": [
-            "Route ticket",
-            "Close out"
-          ],
-          "tools_used": [
-            "get_tickets"
-          ]
-        },
-        {
           "agent": "Facilities",
           "actions": [
-            "Check lease"
+            "Answer Boss"
           ],
           "tools_used": [
-            "get_lease_details",
-            "get_all_leases"
+            "get_tickets",
+            "get_desk_today",
+            "get_lease_details"
+          ],
+          "delegated_by": [
+            "Boss"
           ]
         },
         {
           "agent": "Accounting",
           "actions": [
-            "Prepare rent",
+            "Answer Boss",
+            "Prepare payment",
             "Record payment"
           ],
           "tools_used": [
+            "get_lease_details",
             "get_cash_balance",
             "log_payment"
+          ],
+          "delegated_by": [
+            "Boss"
           ]
+        },
+        {
+          "agent": "Boss",
+          "actions": [
+            "Close out"
+          ],
+          "tools_used": [
+            "get_tickets",
+            "get_desk_today",
+            "get_lease_details",
+            "get_cash_balance"
+          ],
+          "delegated_by": []
+        }
+      ],
+      "delegations": [
+        {
+          "from": "Boss",
+          "to": "Facilities"
+        },
+        {
+          "from": "Boss",
+          "to": "Accounting"
         }
       ],
       "human_approvals": {
@@ -141,46 +223,95 @@
       "type": "price_override",
       "requester": "Yale AI Club",
       "final_status": "resolved",
-      "outcome": "Bulk quote prepared at a price that clears the 20% margin floor. No cash moved; the quote waits on a human to send.",
+      "outcome": "Bulk quote worked out against the real margin. No cash moved; nothing reaches the customer until a human signs off.",
       "agents": [
         {
-          "agent": "Boss",
+          "agent": "Customer Service",
           "actions": [
-            "Route ticket",
-            "Close out"
+            "Answer Boss"
           ],
           "tools_used": [
-            "get_tickets"
-          ]
-        },
-        {
-          "agent": "Inventory",
-          "actions": [
-            "Feasibility check"
-          ],
-          "tools_used": [
+            "get_tickets",
             "get_inventory_stock",
-            "get_vendors",
-            "get_open_invoices_for_vendor"
+            "get_pricing"
+          ],
+          "delegated_by": [
+            "Boss"
           ]
         },
         {
           "agent": "Accounting",
           "actions": [
-            "Margin check"
+            "Answer Boss"
           ],
           "tools_used": [
-            "get_pricing"
+            "get_pricing",
+            "get_desk_today",
+            "get_tickets"
+          ],
+          "delegated_by": [
+            "Boss"
           ]
         },
         {
-          "agent": "Customer Service",
+          "agent": "Boss",
           "actions": [
-            "Draft quote"
+            "Answer Inventory",
+            "Close out"
           ],
           "tools_used": [
-            "get_pricing"
+            "get_tickets"
+          ],
+          "delegated_by": [
+            "Inventory"
           ]
+        },
+        {
+          "agent": "Inventory",
+          "actions": [
+            "Answer Boss"
+          ],
+          "tools_used": [
+            "get_inventory_stock",
+            "get_tickets",
+            "get_vendors",
+            "get_pricing",
+            "get_desk_today",
+            "get_open_invoices_for_vendor"
+          ],
+          "delegated_by": [
+            "Boss"
+          ]
+        }
+      ],
+      "delegations": [
+        {
+          "from": "Boss",
+          "to": "Customer Service"
+        },
+        {
+          "from": "Boss",
+          "to": "Accounting"
+        },
+        {
+          "from": "Boss",
+          "to": "Accounting"
+        },
+        {
+          "from": "Boss",
+          "to": "Customer Service"
+        },
+        {
+          "from": "Inventory",
+          "to": "Boss"
+        },
+        {
+          "from": "Boss",
+          "to": "Inventory"
+        },
+        {
+          "from": "Boss",
+          "to": "Inventory"
         }
       ],
       "human_approvals": {

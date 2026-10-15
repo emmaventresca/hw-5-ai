@@ -287,6 +287,18 @@ def log_payment(kind: str, ref_id: int, amount: float, account: str, paid_at: st
         return {"success": False, "error": str(e)}
 
 
+def get_desk_today() -> dict:
+    """The shop's current date, used to decide what is overdue."""
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT date_today, notes FROM desk LIMIT 1")
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return {"date_today": row["date_today"], "notes": row["notes"], "found": True}
+    return {"found": False}
+
 # ============================================================================
 # MCP STDIO TRANSPORT
 # ============================================================================
@@ -321,6 +333,13 @@ TOOLS = [
         "fn": get_lease_details,
         "inputSchema": {"type": "object", "required": ["lease_id"], "properties": {
             "lease_id": _i("Lease id from the leases table")}},
+    },
+    {
+        "name": "get_desk_today",
+        "description": "The shop's current date. Call this before judging whether an invoice "
+                       "or a rent payment is overdue — never assume today's date.",
+        "fn": get_desk_today,
+        "inputSchema": {"type": "object", "properties": {}},
     },
     {
         "name": "get_tickets",

@@ -66,20 +66,24 @@
 <body>
 <div class="wrap">
   <header class="top"><h1>Campus Customs — Resolved Board</h1>
-    <p class="lede">One full run of all three tickets against <code>data/campus_customs_new.db</code>, after a clean reset.
-    Shop date 2026-08-31. Every figure was fetched through a live MCP <code>tools/call</code>.</p>
+    <p class="lede">One full run of all three tickets against <code>data/campus_customs_new.db</code>, after a clean
+    reset, driven through the React board. Shop date 2026-08-31. Five Pydantic AI agents on
+    <strong>gpt-6-luna</strong>, every figure fetched through a live MCP <code>tools/call</code>.</p>
     <dl class="summary">
       <div><dt>Starting checking</dt><dd>$3,400.00</dd></div>
       <div><dt>Approved out</dt><dd>$3,240.00</dd></div>
       <div><dt>Ending checking</dt><dd>$160.00</dd></div>
       <div><dt>Human approvals</dt><dd>2</dd></div>
-      <div><dt>MCP tools called</dt><dd>9 of 9</dd></div></dl></header>
+      <div><dt>MCP tools called</dt><dd>9 of 10</dd></div></dl></header>
+  <section class="card"><h2>Who asked whom</h2>
+    <p class="outcome">Every agent can delegate to every other. These edges are taken from the audit trail of this run.</p>
+    <table class="agents"><tbody><tr><td class='ag'>Boss</td><td colspan='2'>asked <strong>Customer Service</strong></td></tr><tr><td class='ag'>Customer Service</td><td colspan='2'>asked <strong>Boss</strong></td></tr><tr><td class='ag'>Customer Service</td><td colspan='2'>asked <strong>Accounting</strong></td></tr><tr><td class='ag'>Inventory</td><td colspan='2'>asked <strong>Customer Service</strong></td></tr><tr><td class='ag'>Inventory</td><td colspan='2'>asked <strong>Accounting</strong></td></tr><tr><td class='ag'>Boss</td><td colspan='2'>asked <strong>Inventory</strong></td></tr><tr><td class='ag'>Boss</td><td colspan='2'>asked <strong>Facilities</strong></td></tr><tr><td class='ag'>Boss</td><td colspan='2'>asked <strong>Accounting</strong></td></tr><tr><td class='ag'>Inventory</td><td colspan='2'>asked <strong>Boss</strong></td></tr></tbody></table></section>
 
   <section class="card" id="t101">
     <header class="card-head"><div><h2><span class="num">#101</span> Bulldog tee</h2>
     <p class="sub">customer order · Tauhid Zaman</p></div><span class="pill">resolved</span></header>
     <p class="outcome">Vendor gate cleared and the reprint released. Invoice 501 paid, so Bulldog Print Co will ship. The customer was told the truth about the delay instead of a date we could not keep.</p>
-    <table class="agents"><thead><tr><th>Agent</th><th>Did</th><th>MCP tools called</th></tr></thead><tbody><tr><td class='ag'>Boss</td><td>Route ticket · Close out</td><td class='tools'><code>get_tickets</code></td></tr><tr><td class='ag'>Inventory</td><td>Check stock</td><td class='tools'><code>get_inventory_stock</code><code>get_vendors</code></td></tr><tr><td class='ag'>Accounting</td><td>Clear vendor gate · Record payment</td><td class='tools'><code>get_open_invoices_for_vendor</code><code>get_cash_balance</code><code>get_pricing</code><code>log_payment</code></td></tr><tr><td class='ag'>Customer Service</td><td>Draft reply</td><td class='tools'>—</td></tr></tbody></table>
+    <table class="agents"><thead><tr><th>Agent</th><th>Did</th><th>MCP tools called</th></tr></thead><tbody><tr><td class='ag'>Customer Service</td><td>Answer Boss · Answer Inventory<div class='why'>asked by Boss, Inventory</div></td><td class='tools'><code>get_inventory_stock</code><code>get_desk_today</code><code>get_tickets</code><code>get_vendors</code><code>get_open_invoices_for_vendor</code></td></tr><tr><td class='ag'>Boss</td><td>Answer Customer Service · Close out<div class='why'>asked by Customer Service</div></td><td class='tools'><code>get_tickets</code><code>get_inventory_stock</code><code>get_open_invoices_for_vendor</code><code>get_desk_today</code></td></tr><tr><td class='ag'>Accounting</td><td>Answer Customer Service · Answer Inventory · Prepare payment · Record payment<div class='why'>asked by Customer Service, Inventory</div></td><td class='tools'><code>get_desk_today</code><code>get_tickets</code><code>get_vendors</code><code>get_open_invoices_for_vendor</code><code>get_cash_balance</code><code>log_payment</code></td></tr><tr><td class='ag'>Inventory</td><td>Answer Boss<div class='why'>asked by Boss</div></td><td class='tools'><code>get_inventory_stock</code><code>get_tickets</code><code>get_vendors</code><code>get_desk_today</code><code>get_open_invoices_for_vendor</code><code>get_pricing</code></td></tr></tbody></table>
     <h3>Human approval</h3><p class='appr'><strong>$840.00</strong> — vendor payment, Invoice 501, released by Desk operator.</p>
     <figure><img src="screens/ticket_101.jpg" alt="Campus Customs board with ticket 101 resolved">
     <figcaption>The React board at localhost:5173 with ticket 101 resolved.</figcaption></figure>
@@ -88,7 +92,7 @@
     <header class="card-head"><div><h2><span class="num">#102</span> Rent due</h2>
     <p class="sub">rent notice · Elm City Properties</p></div><span class="pill">resolved</span></header>
     <p class="outcome">Chapel Street rent paid two days before it was due, with a human releasing the cash.</p>
-    <table class="agents"><thead><tr><th>Agent</th><th>Did</th><th>MCP tools called</th></tr></thead><tbody><tr><td class='ag'>Boss</td><td>Route ticket · Close out</td><td class='tools'><code>get_tickets</code></td></tr><tr><td class='ag'>Facilities</td><td>Check lease</td><td class='tools'><code>get_lease_details</code><code>get_all_leases</code></td></tr><tr><td class='ag'>Accounting</td><td>Prepare rent · Record payment</td><td class='tools'><code>get_cash_balance</code><code>log_payment</code></td></tr></tbody></table>
+    <table class="agents"><thead><tr><th>Agent</th><th>Did</th><th>MCP tools called</th></tr></thead><tbody><tr><td class='ag'>Facilities</td><td>Answer Boss<div class='why'>asked by Boss</div></td><td class='tools'><code>get_tickets</code><code>get_desk_today</code><code>get_lease_details</code></td></tr><tr><td class='ag'>Accounting</td><td>Answer Boss · Prepare payment · Record payment<div class='why'>asked by Boss</div></td><td class='tools'><code>get_lease_details</code><code>get_cash_balance</code><code>log_payment</code></td></tr><tr><td class='ag'>Boss</td><td>Close out</td><td class='tools'><code>get_tickets</code><code>get_desk_today</code><code>get_lease_details</code><code>get_cash_balance</code></td></tr></tbody></table>
     <h3>Human approval</h3><p class='appr'><strong>$2,400.00</strong> — rent payment, Lease 1, released by Desk operator.</p>
     <figure><img src="screens/ticket_102.jpg" alt="Campus Customs board with ticket 102 resolved">
     <figcaption>The React board at localhost:5173 with ticket 102 resolved.</figcaption></figure>
@@ -96,8 +100,8 @@
   <section class="card" id="t103">
     <header class="card-head"><div><h2><span class="num">#103</span> Bulk hoodie discount</h2>
     <p class="sub">price override · Yale AI Club</p></div><span class="pill">resolved</span></header>
-    <p class="outcome">Bulk quote prepared at a price that clears the 20% margin floor. No cash moved; the quote waits on a human to send.</p>
-    <table class="agents"><thead><tr><th>Agent</th><th>Did</th><th>MCP tools called</th></tr></thead><tbody><tr><td class='ag'>Boss</td><td>Route ticket · Close out</td><td class='tools'><code>get_tickets</code></td></tr><tr><td class='ag'>Inventory</td><td>Feasibility check</td><td class='tools'><code>get_inventory_stock</code><code>get_vendors</code><code>get_open_invoices_for_vendor</code></td></tr><tr><td class='ag'>Accounting</td><td>Margin check</td><td class='tools'><code>get_pricing</code></td></tr><tr><td class='ag'>Customer Service</td><td>Draft quote</td><td class='tools'><code>get_pricing</code></td></tr></tbody></table>
+    <p class="outcome">Bulk quote worked out against the real margin. No cash moved; nothing reaches the customer until a human signs off.</p>
+    <table class="agents"><thead><tr><th>Agent</th><th>Did</th><th>MCP tools called</th></tr></thead><tbody><tr><td class='ag'>Customer Service</td><td>Answer Boss<div class='why'>asked by Boss</div></td><td class='tools'><code>get_tickets</code><code>get_inventory_stock</code><code>get_pricing</code></td></tr><tr><td class='ag'>Accounting</td><td>Answer Boss<div class='why'>asked by Boss</div></td><td class='tools'><code>get_pricing</code><code>get_desk_today</code><code>get_tickets</code></td></tr><tr><td class='ag'>Boss</td><td>Answer Inventory · Close out<div class='why'>asked by Inventory</div></td><td class='tools'><code>get_tickets</code></td></tr><tr><td class='ag'>Inventory</td><td>Answer Boss<div class='why'>asked by Boss</div></td><td class='tools'><code>get_inventory_stock</code><code>get_tickets</code><code>get_vendors</code><code>get_pricing</code><code>get_desk_today</code><code>get_open_invoices_for_vendor</code></td></tr></tbody></table>
     <h3>Human approval</h3><p class='none'>No payment required. Nothing left the account.</p>
     <figure><img src="screens/ticket_103.jpg" alt="Campus Customs board with ticket 103 resolved">
     <figcaption>The React board at localhost:5173 with ticket 103 resolved.</figcaption></figure>

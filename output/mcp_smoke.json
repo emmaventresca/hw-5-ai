@@ -1,8 +1,31 @@
 {
+  "generated_at": "2026-10-14T20:53:21.244852",
+  "transport": {
+    "type": "stdio",
+    "protocol": "JSON-RPC 2.0",
+    "protocolVersion": "2024-11-05",
+    "server": {
+      "name": "campus_customs",
+      "version": "1.0.0"
+    },
+    "tools_advertised": [
+      "get_inventory_stock",
+      "get_open_invoices_for_vendor",
+      "get_lease_details",
+      "get_tickets",
+      "get_vendors",
+      "get_cash_balance",
+      "get_all_leases",
+      "get_pricing",
+      "log_payment"
+    ]
+  },
+  "database": "data/campus_customs_new.db",
+  "method": "Each tool was called over the live MCP stdio transport, and each result was cross-checked against a direct SQL read of the same database.",
   "mcp_smoke_tests": [
     {
       "test_number": 1,
-      "prompt": "What is the current stock level of CC-TEE-WHITE in size S? (This is for Ticket 101 - Tauhid Zaman's order)",
+      "prompt": "How many CC-TEE-WHITE size S do we have? (Ticket 101, Tauhid Zaman's order)",
       "tool_name": "get_inventory_stock",
       "tool_input": {
         "sku": "CC-TEE-WHITE",
@@ -15,12 +38,16 @@
         "location": "Aisle B",
         "found": true
       },
+      "sql_crosscheck": {
+        "query": "SELECT qty FROM inventory WHERE sku='CC-TEE-WHITE' AND size='S'",
+        "value": 0
+      },
       "database_verified": true,
-      "notes": "Ticket 101: Out of stock triggers Accounting to approve restock order"
+      "notes": "Returns 0, which is the shortfall that starts ticket 101."
     },
     {
       "test_number": 2,
-      "prompt": "What open invoices does vendor 1 (Bulldog Print Co) have? (This blocks fulfillment for Ticket 101)",
+      "prompt": "What open invoices does vendor 1 (Bulldog Print Co) have? (Gates ticket 101)",
       "tool_name": "get_open_invoices_for_vendor",
       "tool_input": {
         "vendor_id": 1
@@ -39,12 +66,16 @@
         ],
         "total_amount_due": 840.0
       },
+      "sql_crosscheck": {
+        "query": "SELECT COUNT(*) FROM invoices WHERE vendor_id=1 AND status='open'",
+        "value": 1
+      },
       "database_verified": true,
-      "notes": "Ticket 101: Invoice 501 is overdue (due 2026-08-28, today is 2026-08-31), gates new orders"
+      "notes": "Invoice 501 for $840.00 is overdue and blocks the reprint."
     },
     {
       "test_number": 3,
-      "prompt": "What are the lease details for lease ID 1? (This is for Ticket 102 - Chapel Street rent)",
+      "prompt": "What are the Chapel Street lease terms? (Ticket 102)",
       "tool_name": "get_lease_details",
       "tool_input": {
         "lease_id": 1
@@ -58,14 +89,177 @@
         "notes": null,
         "found": true
       },
+      "sql_crosscheck": {
+        "query": "SELECT monthly_rent FROM leases WHERE id=1",
+        "value": 2400.0
+      },
       "database_verified": true,
-      "notes": "Ticket 102: Chapel Street rent $2400 due 2026-09-02 (2 days away), requires payment approval"
+      "notes": "$2,400.00 due 2026-09-02, which is what Facilities hands to Accounting."
+    },
+    {
+      "test_number": 4,
+      "prompt": "What is on the board right now?",
+      "tool_name": "get_tickets",
+      "tool_input": {},
+      "tool_output": {
+        "open_tickets": [
+          {
+            "id": 101,
+            "type": "customer_order",
+            "requester": "Tauhid Zaman",
+            "subject": "Bulldog tee",
+            "sku": "CC-TEE-WHITE",
+            "size": "S",
+            "qty": 1,
+            "lease_id": null,
+            "invoice_id": 501,
+            "status": "open",
+            "created_at": "2026-08-31T09:15:00-04:00"
+          },
+          {
+            "id": 102,
+            "type": "rent_notice",
+            "requester": "Elm City Properties",
+            "subject": "Rent due",
+            "sku": null,
+            "size": null,
+            "qty": null,
+            "lease_id": 1,
+            "invoice_id": null,
+            "status": "open",
+            "created_at": "2026-08-31T11:05:00-04:00"
+          },
+          {
+            "id": 103,
+            "type": "price_override",
+            "requester": "Yale AI Club",
+            "subject": "Bulk hoodie discount",
+            "sku": "CC-HOOD-NAVY",
+            "size": "M",
+            "qty": 20,
+            "lease_id": null,
+            "invoice_id": null,
+            "status": "open",
+            "created_at": "2026-08-31T16:55:00-04:00"
+          }
+        ],
+        "total": 3
+      },
+      "sql_crosscheck": {
+        "query": "SELECT COUNT(*) FROM tickets",
+        "value": 3
+      },
+      "database_verified": true,
+      "notes": "Boss opens every run here to decide routing."
+    },
+    {
+      "test_number": 5,
+      "prompt": "Which vendors can we use and how fast are they?",
+      "tool_name": "get_vendors",
+      "tool_input": {},
+      "tool_output": {
+        "vendors": [
+          {
+            "id": 1,
+            "name": "Bulldog Print Co",
+            "specialty": "apparel reprint",
+            "lead_days": 5
+          },
+          {
+            "id": 2,
+            "name": "Elm City Gifts",
+            "specialty": "mugs and small goods",
+            "lead_days": 3
+          },
+          {
+            "id": 3,
+            "name": "QuickShip CT",
+            "specialty": "local courier",
+            "lead_days": 1
+          }
+        ],
+        "total": 3
+      },
+      "sql_crosscheck": {
+        "query": "SELECT COUNT(*) FROM vendors",
+        "value": 3
+      },
+      "database_verified": true,
+      "notes": "Bulldog Print Co is the only apparel reprint vendor, at 5 days."
+    },
+    {
+      "test_number": 6,
+      "prompt": "What is in checking?",
+      "tool_name": "get_cash_balance",
+      "tool_input": {},
+      "tool_output": {
+        "account": "checking",
+        "balance": 3400.0,
+        "date": "2026-08-31"
+      },
+      "sql_crosscheck": {
+        "query": "SELECT balance FROM cash_accounts WHERE name='checking'",
+        "value": 3400.0
+      },
+      "database_verified": true,
+      "notes": "Read live before any payment memo is written."
+    },
+    {
+      "test_number": 7,
+      "prompt": "Show the whole lease portfolio.",
+      "tool_name": "get_all_leases",
+      "tool_input": {},
+      "tool_output": {
+        "leases": [
+          {
+            "id": 1,
+            "space_name": "Chapel Street shop",
+            "landlord": "Elm City Properties",
+            "monthly_rent": 2400.0,
+            "next_due": "2026-09-02",
+            "notes": null
+          }
+        ],
+        "total": 1
+      },
+      "sql_crosscheck": {
+        "query": "SELECT COUNT(*) FROM leases",
+        "value": 1
+      },
+      "database_verified": true,
+      "notes": "Confirms no other rent lands in the same window."
+    },
+    {
+      "test_number": 8,
+      "prompt": "What is the cost and list price on CC-HOOD-NAVY? (Ticket 103 margin work)",
+      "tool_name": "get_pricing",
+      "tool_input": {
+        "sku": "CC-HOOD-NAVY"
+      },
+      "tool_output": {
+        "sku": "CC-HOOD-NAVY",
+        "unit_cost": 22.0,
+        "list_price": 58.0,
+        "margin": 36.0,
+        "margin_percent": 163.63636363636365,
+        "found": true
+      },
+      "sql_crosscheck": {
+        "query": "SELECT unit_cost FROM pricing WHERE sku='CC-HOOD-NAVY'",
+        "value": 22.0
+      },
+      "database_verified": true,
+      "notes": "$22.00 cost against $58.00 list drives the whole discount calculation."
     }
   ],
   "summary": {
-    "total_tests": 3,
+    "tools_advertised": 9,
+    "tools_called": 8,
+    "verified_against_database": 8,
     "all_passed": true,
-    "test_date": "2026-10-12",
-    "database": "data/campus_customs_new.db"
+    "not_called": {
+      "tool": "log_payment",
+      "reason": "Write tool. Calling it would insert a payments row and move real money in the working database, so it is deliberately excluded from a read-only smoke test. It is exercised end to end by POST /approve-payment during the full three-ticket run recorded in output/audit_trail.json and output/resolved_tickets.json."
+    }
   }
 }

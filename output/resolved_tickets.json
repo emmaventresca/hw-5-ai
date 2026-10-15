@@ -130,7 +130,7 @@
       "type": "price_override",
       "requester": "Yale AI Club",
       "final_status": "resolved",
-      "outcome": "Bulk quote prepared at a price that holds margin. No cash moved; the quote waits on a human to send.",
+      "outcome": "Bulk quote prepared at a price that clears the 20% margin floor. No cash moved; the quote waits on a human to send.",
       "agents": [
         {
           "agent": "Boss",

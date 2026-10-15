@@ -295,3 +295,90 @@ Tables: `desk`, `tickets`, `inventory`, `pricing`, `vendors`, `leases`, `cash_ac
 **Status:** ✓ Q5 Prompts Complete — Ready for orchestration/agent loop implementation
 
 ---
+
+## Question Six: Plan the Three Tickets Before Building
+
+**Problem Number & Title:** Q6 — Expected Resolution Paths
+
+**User Prompt (Own Words):**
+> "Before we work on the back end, we want to write down what we think is going to happen with the team looking at each open ticket. Put that in `output/desk_tickets.html` — a tab per ticket, plus empty cache and reflection tabs. For each ticket's expected, we fill in after we run the agents, then compare plan to what actually happens. Don't want every specialist on every ticket — streamlined process just for efficiency. For each ticket show: 1) who boss calls first and why, 2) all agent delegations, 3) what MCP tools we expect this run to use."
+
+**Expected paths recorded (user's own words, filler removed):**
+- **101** — Boss calls Inventory first (out of stock item, we have zero). Then Accounting for the overdue invoice, then Customer Service to draft the reply. Restock from Bulldog Print Co, five-day lead. "Everyone but facilities."
+- **102** — Boss calls Facilities first (they are in charge of the shop space, including leases and rent), then Accounting for the cash outflow, with human approval kept in the loop.
+- **103** — Boss calls Inventory first for a feasibility check (12-hoodie gap), then Accounting for margin, then Customer Service — margin confirmed healthy before any discount number goes out.
+
+**Status:** ✓ Plans written before any orchestration existed, so the comparison is honest.
+
+---
+
+## Question Seven: Backend Routes
+
+**Problem Number & Title:** Q7 — FastAPI Backend
+
+**User Prompt (Own Words):**
+> "For question seven, this is called backend routes. We want the React frontend dashboard to have a backend that it can call. In `backend/main.py` use FastAPI and add routes. First, return the three tickets and whether each is open or resolved. Then take a ticket ID and run the agent team on the ticket. Then return agent events. Approve a payment or purchase after a human clicks approve — that means agents only prepare the pay, and this route is actually what changes cash. Return the current balance from `cash_accounts`. Reset the database to the original values every time we want a fresh run. And in `output/harness.md` list each route in one line, what the URL is and what it does. Be succinct, be accurate, double check your work."
+
+**Routes built:** `/health`, `/tickets`, `/run-ticket/{id}`, `/agent-events`, `/cash-balance`, `/approve-payment`, `/reset-db`.
+
+**Key design decision:** `POST /approve-payment` is the only route that touches `cash_accounts`. Agents prepare a `pending_approval`; nothing moves until a human releases it. A payment larger than the balance is refused with a 400 and the refusal is written to the audit trail.
+
+**Status:** ✓ All seven routes implemented and documented in `output/harness.md`.
+
+---
+
+## Question Eight: React Agent Dashboard
+
+**Problem Number & Title:** Q8 — The Board
+
+**User Prompt (Own Words):**
+> "We create the React front end — this is the agent dashboard. Build it in `frontend/` with React, Vite and TypeScript. Our board should list all three tickets, let you pick a ticket and start the agent team on it, show each agent what they're saying and doing while the ticket runs, mark a ticket resolved when it finishes a run, show a short summary of what each agent did on the ticket, let a human approve a pay or purchase when asked, and show the checking balance which should drop after an approved pay. Agents on the left side, a panel in the middle having the summary and changes made, and on the right side seeing what activity is currently running. The front end talks to the back end at localhost:8000, and allow the Vite page origin, which is usually localhost:5173."
+
+**Follow-up direction:** The first build was rejected as looking AI-generated. The user asked for a sleeker, more professional dashboard (referencing joinpogo.com), a cream and navy palette, brighter ticket text, softer edges, animal avatars per agent for personality, a rotating line in the header, a "show email draft" control for Customer Service, and a way to open Accounting's math.
+
+**Status:** ✓ Built and verified live against the backend at desktop and mobile widths. Visual rationale recorded in `output/design.md`.
+
+---
+
+## Question Nine: Full Three-Ticket Run
+
+**Problem Number & Title:** Q9 — Run It For Real
+
+**User Prompt (Own Words):**
+> "Before we test the agents on a full run, reset the working database `data/campus_customs_new.db` so we have a clean run to start. Take note of the starting checking balance, then run all three tickets on the board — 101, 102 and 103 — until we've resolved each. Then open `output/desk_tickets.html` from problem six and on each of the ticket tabs fill the actual section from this run, meaning which agents worked, what they delegated, and which tools they used. Keep the expected section so we can compare the two — don't overwrite expected. On the cache tab, itemize the money: the starting checking balance after a reset, then for each individual ticket how the cash changed when the ticket was resolved and why, and the ending checking balance. This has to match `cash_accounts` in the working database. We're going to lose a ton of points if we have wrong cash math. Also save `output/resolved_tickets.json` and `output/resolved_board.html` with a screenshot of the React board for each resolved ticket, append the real runs to `output/audit_trail.json` without overwriting, and finish `output/harness.md` so it covers the tables, MCP tools, the five agents, API routes, the dashboard and the safety rules."
+
+**Verified result:** $3,400.00 → $160.00 across all three tickets, two human approvals, reconciled three independent ways against `cash_accounts` and `payments`.
+
+**Status:** ✓ Complete. Evidence in `desk_tickets.html`, `resolved_tickets.json`, `resolved_board.html`, `audit_trail.json`, `harness.md`.
+
+---
+
+## Question Ten: Reflection
+
+**Problem Number & Title:** Q10 — Evaluating the Agents
+
+**User Prompt (Own Words):**
+> "Fill the reflection tab in `output/desk_tickets.html`, in my own vibe, detailed and thorough. The questions are: how would you evaluate the performance of the agents on each ticket and why; for each ticket how did the actual compare to the expected plan; what would have been simpler as one agent with tools and why; describe three new problems Campus Customs might face that this agent team could solve with the tools we built, naming the specific tools; and describe three new problems it could not solve, explaining the tools and agents you would need."
+
+**Status:** ✓ Written as a developed essay in the Reflection tab, in the user's own voice and arguments.
+
+---
+
+## Question Eleven: Push to GitHub
+
+**Problem Number & Title:** Q11 — Public Repository
+
+**User Prompt (Own Words):**
+> "Problem 11 is pushing to GitHub, and it has to be a public repository so that the graders can clone it. We submit the repo URL to Canvas and put it in `output/github_url.txt`. We don't want to push the real `.env` to the GitHub repo, but we do want to include both of the database files under `data/` — the original and the working copy — so that the graders can run the app easily. The README should explain copying the original DB to the working copy when you need a clean run, starting the MCP server, the FastAPI backend and the React board, and resetting the DB before a full three-ticket run. Try that yourself while you're checking through everything — this should work on our system as well as all the graders'."
+
+**Pre-push verification performed:**
+- `.env` confirmed excluded; only `.env.example` with a placeholder is committed
+- Both `data/*.db` files committed so the app runs on clone
+- Repository scanned for key patterns before the first commit
+- `frontend` production build run clean
+- MCP server, FastAPI backend and React board each started from the documented commands
+- Full three-ticket run re-executed through the live API and reconciled against the database
+
+**Status:** ✓ Repository prepared and verified.
+
+---

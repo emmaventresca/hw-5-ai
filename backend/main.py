@@ -29,6 +29,10 @@ DB_WORKING = Path(__file__).parent.parent / "data" / "campus_customs_new.db"
 DB_ORIGINAL = Path(__file__).parent.parent / "data" / "campus_customs.db"
 AUDIT_TRAIL = Path(__file__).parent.parent / "output" / "audit_trail.json"
 
+# Shop pricing rules, in one place so the agents and the board never disagree.
+MARGIN_FLOOR = 0.20     # never quote a price that returns less than this
+BULK_DISCOUNT = 0.15    # the discount we offer on a bulk request, floor permitting
+
 
 # ============================================================================
 # DATA MODELS
@@ -301,30 +305,57 @@ def orchestrate(conn, ticket, today: str):
 
         price = one("SELECT * FROM pricing WHERE sku = ?", (ticket["sku"],))
         cost, lst = price["unit_cost"], price["list_price"]
-        floor = round(cost / 0.80, 2)                      # 20% margin floor
-        offer = round(lst * 0.85, 2)                       # 15% bulk discount
+        floor = round(cost / (1 - MARGIN_FLOOR), 2)          # cheapest price holding the floor
+        wanted = round(lst * (1 - BULK_DISCOUNT), 2)         # the discount we would like to give
+        # The floor wins. A discount is never allowed to breach the margin rule.
+        offer = max(wanted, floor)
+        clamped = offer > wanted
         margin = (offer - cost) / offer * 100
+        pct_off = (lst - offer) / lst * 100
+
+        if floor >= lst:
+            # Cost has risen far enough that even list price barely clears the floor.
+            # There is no discount to give, so this goes to a human rather than out the door.
+            verdict = (f"That floor is at or above the {money(lst)} list price, so there is no discount to "
+                       f"give on this item at all — any reduction sells it below the {MARGIN_FLOOR:.0%} "
+                       f"margin rule. Escalating to a human: either the list price needs revisiting or the "
+                       f"request is declined. No number goes to the customer.")
+        elif clamped:
+            verdict = (f"A {BULK_DISCOUNT:.0%} discount would land at {money(wanted)}, which breaches the "
+                       f"{MARGIN_FLOOR:.0%} floor, so it is held at {money(offer)} — "
+                       f"{pct_off:.1f}% off, {margin:.1f}% margin, {money(offer * ticket['qty'])} on "
+                       f"{ticket['qty']} units. Quote the smaller discount, not the one asked for.")
+        else:
+            verdict = (f"A {BULK_DISCOUNT:.0%} bulk discount at {money(offer)} still returns {margin:.1f}%, "
+                       f"or {money(offer * ticket['qty'])} on {ticket['qty']} units. "
+                       f"Approved to quote, no payment involved.")
+
         step("Accounting", "Margin check", ["get_pricing"],
              f"Unit cost {money(cost)} against list {money(lst)} is a {(lst - cost) / lst * 100:.1f}% margin. "
-             f"Holding a 20% floor puts the lowest workable price at {money(floor)}. A 15% bulk discount at "
-             f"{money(offer)} still returns {margin:.1f}%, or {money(offer * ticket['qty'])} on "
-             f"{ticket['qty']} units. Approved to quote, no payment involved.",
+             f"Holding a {MARGIN_FLOOR:.0%} floor puts the lowest workable price at {money(floor)}. {verdict}",
              math=[
                  {"label": "Unit cost", "value": money(cost)},
                  {"label": "List price", "value": money(lst)},
                  {"label": "Margin at list", "value": f"{(lst - cost) / lst * 100:.1f}%"},
-                 {"label": "Lowest price holding a 20% floor", "value": money(floor)},
-                 {"label": "Proposed bulk discount", "value": "15% off list"},
-                 {"label": "Discounted unit price", "value": money(offer)},
+                 {"label": f"Lowest price holding a {MARGIN_FLOOR:.0%} floor", "value": money(floor)},
+                 {"label": f"Asked-for discount ({BULK_DISCOUNT:.0%} off)", "value": money(wanted)},
+                 {"label": "Held at the floor instead" if clamped else "Clears the floor",
+                  "value": money(offer)},
+                 {"label": "Discount actually offered", "value": f"{pct_off:.1f}% off"},
                  {"label": "Margin at that price", "value": f"{margin:.1f}%"},
                  {"label": f"Line total, {ticket['qty']} units", "value": money(offer * ticket["qty"]), "total": True},
              ])
 
+        undiscountable = floor >= lst
+
         step("Customer Service", "Draft quote", ["get_pricing"],
-             f"Drafted for {ticket['requester']}: {stock['qty']} available now, remaining {gap} in about "
-             f"{vendor['lead_days']} days, at {money(offer)} each for the full {ticket['qty']}. "
-             f"Held internally until someone signs off.",
-             draft={
+             (f"No price drafted. Accounting could not clear any discount on this item, so there is "
+              f"nothing to quote {ticket['requester']} until a human rules on it."
+              if undiscountable else
+              f"Drafted for {ticket['requester']}: {stock['qty']} available now, remaining {gap} in about "
+              f"{vendor['lead_days']} days, at {money(offer)} each for the full {ticket['qty']}. "
+              f"Held internally until someone signs off."),
+             draft=None if undiscountable else {
                  "to": ticket["requester"],
                  "subject": f"Quote — {ticket['qty']} hoodies, size {ticket['size']}",
                  "body": (
@@ -334,7 +365,8 @@ def orchestrate(conn, ticket, today: str):
                      f"shelf right now. The remaining {gap} would come from a reprint with "
                      f"{vendor['name']}, which runs about {vendor['lead_days']} days.\n\n"
                      f"On price, we can do {money(offer)} per hoodie for the full {ticket['qty']}, down "
-                     f"from {money(lst)}. That comes to {money(offer * ticket['qty'])} for the order.\n\n"
+                     f"from {money(lst)} — that is {pct_off:.0f}% off, and it comes to "
+                     f"{money(offer * ticket['qty'])} for the order.\n\n"
                      f"If that works, tell me your deadline and I will confirm whether the reprint lands "
                      f"in time before you commit.\n\n"
                      f"— Campus Customs"

@@ -1,0 +1,23 @@
+# Local environment
+.venv/
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Node
+node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+
+# NOTE: data/*.db is intentionally NOT ignored. Both the pristine database and
+# the working copy are committed so graders can clone and run immediately.
+
+# Local tooling state, not part of the deliverable
+.claude/
+.impeccable/

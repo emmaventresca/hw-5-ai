@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campus Customs — Resolved Board</title>
+<style>
+  :root {
+    --navy:#0e2a4d; --ink:#1b2433; --ink-2:#55606f; --ink-3:#8a8372;
+    --paper:#f7f1e1; --surface:#fffbf0; --line:#e2d7bd; --line-soft:#ede4d1;
+    --accent:#a9762f; --res-fg:#2b6148; --res-bg:#dfeada;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --serif:"Iowan Old Style",Georgia,serif;
+  }
+  *,*::before,*::after { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink);
+    font:13px/1.55 ui-sans-serif,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1080px; margin:0 auto; padding:40px 24px 64px; }
+  header.top { border-bottom:1px solid var(--line); padding-bottom:20px; margin-bottom:28px; }
+  h1 { font-family:var(--serif); font-size:30px; font-weight:400; color:var(--navy); margin:0 0 4px; }
+  .lede { margin:0; color:var(--ink-2); font-size:13.5px; }
+  .summary { display:flex; gap:34px; flex-wrap:wrap; margin-top:18px; padding:14px 16px;
+    background:var(--surface); border:1px solid var(--line); border-radius:5px; }
+  .summary div { display:flex; flex-direction:column; gap:2px; }
+  .summary dt { font-size:10px; text-transform:uppercase; letter-spacing:.8px; color:var(--ink-3); }
+  .summary dd { margin:0; font-size:15px; font-variant-numeric:tabular-nums; color:var(--navy); }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:6px;
+    padding:22px 24px; margin-bottom:26px; }
+  .card-head { display:flex; justify-content:space-between; align-items:flex-start;
+    gap:18px; margin-bottom:10px; }
+  h2 { font-family:var(--serif); font-size:21px; font-weight:400; color:var(--navy); margin:0; }
+  .num { font-family:var(--mono); font-size:14px; color:var(--ink-3); }
+  .sub { margin:2px 0 0; color:var(--ink-2); font-size:12px; text-transform:capitalize; }
+  .pill { background:var(--res-bg); color:var(--res-fg); padding:3px 11px;
+    border-radius:20px; font-size:11px; text-transform:capitalize; white-space:nowrap; }
+  .outcome { margin:0 0 18px; color:var(--ink-2); font-size:13px; max-width:68ch; }
+  h3 { font-size:10px; text-transform:uppercase; letter-spacing:1px;
+    color:var(--ink-3); margin:20px 0 8px; font-weight:600; }
+  table.agents { width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.agents th { text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.7px;
+    color:var(--ink-3); padding:0 10px 6px 0; border-bottom:1px solid var(--line); }
+  table.agents td { padding:7px 10px 7px 0; border-bottom:1px solid var(--line-soft);
+    vertical-align:top; color:var(--ink-2); }
+  td.ag { color:var(--ink); font-weight:500; white-space:nowrap; }
+  .tools code { font-family:var(--mono); font-size:10px; padding:1px 5px; margin:0 3px 3px 0;
+    display:inline-block; background:var(--paper); border:1px solid var(--line);
+    border-radius:3px; color:var(--ink-3); }
+  .appr { margin:0 0 4px; color:var(--ink-2); }
+  .appr strong { color:var(--accent); font-variant-numeric:tabular-nums; }
+  .none { margin:0; color:var(--ink-3); font-style:italic; }
+  figure { margin:18px 0 0; }
+  img { width:100%; display:block; border:1px solid var(--line); border-radius:5px; }
+  figcaption { margin-top:7px; font-size:11px; color:var(--ink-3); }
+  table.cash { width:100%; border-collapse:collapse; font-size:13px; margin-top:6px; }
+  table.cash th { text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.7px;
+    color:var(--ink-3); padding:0 12px 7px 0; border-bottom:1px solid var(--line); }
+  table.cash td { padding:8px 12px 8px 0; border-bottom:1px solid var(--line-soft); }
+  td.n { text-align:right; font-variant-numeric:tabular-nums; font-family:var(--mono); font-size:12px; }
+  td.out { color:var(--accent); }
+  td.zero { color:var(--ink-3); }
+  tr.total td { border-top:2px solid var(--line); border-bottom:none;
+    font-weight:600; color:var(--navy); padding-top:10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Campus Customs — Resolved Board</h1>
+    <p class="lede">One full run of all three tickets against
+      <code>data/campus_customs_new.db</code>, after a clean reset. Shop date 2026-08-31.</p>
+    <dl class="summary">
+      <div><dt>Starting checking</dt><dd>$3,400.00</dd></div>
+      <div><dt>Approved out</dt><dd>$3,240.00</dd></div>
+      <div><dt>Ending checking</dt><dd>$160.00</dd></div>
+      <div><dt>Human approvals</dt><dd>2</dd></div>
+      <div><dt>Tickets resolved</dt><dd>3 of 3</dd></div>
+    </dl>
+  </header>
+
+  <section class="card" id="t101">
+    <header class="card-head">
+      <div><h2><span class="num">#101</span> Bulldog tee</h2>
+      <p class="sub">customer order · Tauhid Zaman</p></div>
+      <span class="pill">resolved</span>
+    </header>
+    <p class="outcome">Vendor gate cleared and the reprint released. Invoice 501 paid, so Bulldog Print Co will ship. The customer was told the truth about the delay instead of a date we could not keep.</p>
+    <table class="agents"><thead><tr><th>Agent</th><th>Did</th><th>MCP tools</th></tr></thead>
+    <tbody><tr><td class='ag'>Boss</td><td>Route ticket · Close out</td><td class='tools'><code>get_tickets</code></td></tr><tr><td class='ag'>Inventory</td><td>Check stock</td><td class='tools'><code>get_inventory_stock</code><code>get_vendors</code></td></tr><tr><td class='ag'>Accounting</td><td>Clear vendor gate · Record payment</td><td class='tools'><code>get_open_invoices_for_vendor</code><code>get_cash_balance</code><code>log_payment</code></td></tr><tr><td class='ag'>Customer Service</td><td>Draft reply</td><td class='tools'><code>get_pricing</code></td></tr></tbody></table>
+    <h3>Human approval</h3>
+    <p class='appr'><strong>$840.00</strong> — vendor payment, Invoice 501, released by Desk operator.</p>
+    <figure><img src="screens/ticket_101.jpg"
+      alt="Campus Customs board with ticket 101 resolved">
+      <figcaption>The React board at localhost:5173 with ticket 101 resolved.</figcaption></figure>
+  </section>
+  <section class="card" id="t102">
+    <header class="card-head">
+      <div><h2><span class="num">#102</span> Rent due</h2>
+      <p class="sub">rent notice · Elm City Properties</p></div>
+      <span class="pill">resolved</span>
+    </header>
+    <p class="outcome">Chapel Street rent paid two days before it was due, with a human releasing the cash.</p>
+    <table class="agents"><thead><tr><th>Agent</th><th>Did</th><th>MCP tools</th></tr></thead>
+    <tbody><tr><td class='ag'>Boss</td><td>Route ticket · Close out</td><td class='tools'><code>get_tickets</code></td></tr><tr><td class='ag'>Facilities</td><td>Check lease</td><td class='tools'><code>get_lease_details</code><code>get_all_leases</code></td></tr><tr><td class='ag'>Accounting</td><td>Prepare rent · Record payment</td><td class='tools'><code>get_cash_balance</code><code>log_payment</code></td></tr></tbody></table>
+    <h3>Human approval</h3>
+    <p class='appr'><strong>$2,400.00</strong> — rent payment, Lease 1, released by Desk operator.</p>
+    <figure><img src="screens/ticket_102.jpg"
+      alt="Campus Customs board with ticket 102 resolved">
+      <figcaption>The React board at localhost:5173 with ticket 102 resolved.</figcaption></figure>
+  </section>
+  <section class="card" id="t103">
+    <header class="card-head">
+      <div><h2><span class="num">#103</span> Bulk hoodie discount</h2>
+      <p class="sub">price override · Yale AI Club</p></div>
+      <span class="pill">resolved</span>
+    </header>
+    <p class="outcome">Bulk quote prepared at a price that holds margin. No cash moved; the quote waits on a human to send.</p>
+    <table class="agents"><thead><tr><th>Agent</th><th>Did</th><th>MCP tools</th></tr></thead>
+    <tbody><tr><td class='ag'>Boss</td><td>Route ticket · Close out</td><td class='tools'><code>get_tickets</code></td></tr><tr><td class='ag'>Inventory</td><td>Feasibility check</td><td class='tools'><code>get_inventory_stock</code><code>get_vendors</code><code>get_open_invoices_for_vendor</code></td></tr><tr><td class='ag'>Accounting</td><td>Margin check</td><td class='tools'><code>get_pricing</code></td></tr><tr><td class='ag'>Customer Service</td><td>Draft quote</td><td class='tools'><code>get_pricing</code></td></tr></tbody></table>
+    <h3>Human approval</h3>
+    <p class='none'>No payment required. Nothing left the account.</p>
+    <figure><img src="screens/ticket_103.jpg"
+      alt="Campus Customs board with ticket 103 resolved">
+      <figcaption>The React board at localhost:5173 with ticket 103 resolved.</figcaption></figure>
+  </section>
+  <section class="card">
+    <h2>Cash ledger</h2>
+    <p class="outcome">Every figure below is read from <code>cash_accounts</code> and
+      <code>payments</code> in the working database.</p>
+    <table class="cash">
+      <thead><tr><th>Ticket</th><th class="n">Balance before</th>
+        <th class="n">Change</th><th class="n">Balance after</th></tr></thead>
+      <tbody>
+        <tr><td>Start (after reset)</td><td class="n">—</td><td class="n zero">—</td>
+          <td class="n">$3,400.00</td></tr>
+        <tr><td>#101</td><td class='n'>$3,400.00</td><td class='n out'>− $840.00</td><td class='n'>$2,560.00</td></tr><tr><td>#102</td><td class='n'>$2,560.00</td><td class='n out'>− $2,400.00</td><td class='n'>$160.00</td></tr><tr><td>#103</td><td class='n'>$160.00</td><td class='n zero'>—</td><td class='n'>$160.00</td></tr>
+        <tr class="total"><td>Ending balance</td><td class="n"></td>
+          <td class="n">− $3,240.00</td>
+          <td class="n">$160.00</td></tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+</body>
+</html>

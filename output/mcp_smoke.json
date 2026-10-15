@@ -1,0 +1,71 @@
+{
+  "mcp_smoke_tests": [
+    {
+      "test_number": 1,
+      "prompt": "What is the current stock level of CC-TEE-WHITE in size S? (This is for Ticket 101 - Tauhid Zaman's order)",
+      "tool_name": "get_inventory_stock",
+      "tool_input": {
+        "sku": "CC-TEE-WHITE",
+        "size": "S"
+      },
+      "tool_output": {
+        "sku": "CC-TEE-WHITE",
+        "size": "S",
+        "qty": 0,
+        "location": "Aisle B",
+        "found": true
+      },
+      "database_verified": true,
+      "notes": "Ticket 101: Out of stock triggers Accounting to approve restock order"
+    },
+    {
+      "test_number": 2,
+      "prompt": "What open invoices does vendor 1 (Bulldog Print Co) have? (This blocks fulfillment for Ticket 101)",
+      "tool_name": "get_open_invoices_for_vendor",
+      "tool_input": {
+        "vendor_id": 1
+      },
+      "tool_output": {
+        "vendor_id": 1,
+        "open_invoices": [
+          {
+            "id": 501,
+            "vendor_id": 1,
+            "amount": 840.0,
+            "due_date": "2026-08-28",
+            "status": "open",
+            "description": "Rush reprint CC-TEE-WHITE S"
+          }
+        ],
+        "total_amount_due": 840.0
+      },
+      "database_verified": true,
+      "notes": "Ticket 101: Invoice 501 is overdue (due 2026-08-28, today is 2026-08-31), gates new orders"
+    },
+    {
+      "test_number": 3,
+      "prompt": "What are the lease details for lease ID 1? (This is for Ticket 102 - Chapel Street rent)",
+      "tool_name": "get_lease_details",
+      "tool_input": {
+        "lease_id": 1
+      },
+      "tool_output": {
+        "id": 1,
+        "space_name": "Chapel Street shop",
+        "landlord": "Elm City Properties",
+        "monthly_rent": 2400.0,
+        "next_due": "2026-09-02",
+        "notes": null,
+        "found": true
+      },
+      "database_verified": true,
+      "notes": "Ticket 102: Chapel Street rent $2400 due 2026-09-02 (2 days away), requires payment approval"
+    }
+  ],
+  "summary": {
+    "total_tests": 3,
+    "all_passed": true,
+    "test_date": "2026-10-12",
+    "database": "data/campus_customs_new.db"
+  }
+}

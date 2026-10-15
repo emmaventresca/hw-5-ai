@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Customs - Ticket Resolution Plan</title>
+    <style>
+    :root {
+      --navy:#0e2a4d; --navy-soft:#1c4474; --ink:#1b2433; --ink-2:#55606f; --ink-3:#8a8372;
+      --paper:#f7f1e1; --surface:#fffbf0; --line:#e2d7bd; --line-soft:#ede4d1;
+      --accent:#a9762f; --hit:#2b6148; --hit-bg:#dfeada; --miss:#8a3324; --miss-bg:#f3ddd6;
+      --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+      --serif:"Iowan Old Style",Georgia,serif;
+    }
+    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+    body { font:13px/1.6 ui-sans-serif,-apple-system,"Segoe UI",sans-serif; background:var(--paper);
+      color:var(--ink); padding:32px 20px 60px; -webkit-font-smoothing:antialiased; }
+    .container { max-width:1060px; margin:0 auto; background:var(--surface);
+      border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+    .header { background:var(--navy); color:#fff; padding:26px 32px; }
+    .header h1 { font-family:var(--serif); font-size:25px; font-weight:400; letter-spacing:-.3px; }
+    .header p { font-size:13px; opacity:.72; margin-top:3px; }
+    .tabs { display:flex; background:var(--paper); border-bottom:1px solid var(--line); }
+    .tab-button { font:inherit; font-size:12px; font-weight:500; padding:12px 20px; border:none;
+      background:none; color:var(--ink-2); cursor:pointer; border-bottom:2px solid transparent;
+      transition:color .15s, border-color .15s; }
+    .tab-button:hover { color:var(--navy); }
+    .tab-button.active { color:var(--navy); border-bottom-color:var(--navy); background:var(--surface); }
+    .tab-content { display:none; padding:28px 32px 36px; }
+    .tab-content.active { display:block; }
+    .ticket-info { font-family:var(--serif); font-size:18px; color:var(--navy); line-height:1.4;
+      padding-bottom:16px; margin-bottom:22px; border-bottom:1px solid var(--line); }
+    .ticket-section { margin-bottom:30px; }
+    .section-title { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px;
+      color:var(--ink-3); margin-bottom:10px; }
+    .section-content { font-size:13px; color:var(--ink-2); white-space:pre-wrap; line-height:1.65;
+      background:var(--paper); border:1px solid var(--line); border-radius:5px; padding:16px 18px; }
+    .section-content.actual { white-space:normal; background:var(--surface); }
+    .verdict-line { margin-bottom:18px; color:var(--ink-2); }
+    .verdict-line strong { color:var(--navy); }
+    .cmp-title { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px;
+      color:var(--ink-3); margin:22px 0 8px; }
+    .cmp-title:first-of-type { margin-top:0; }
+    table.cmp { width:100%; border-collapse:collapse; font-size:12.5px; }
+    table.cmp th { text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.7px;
+      color:var(--ink-3); font-weight:600; padding:0 10px 6px 0; border-bottom:1px solid var(--line); }
+    table.cmp td { padding:8px 10px 8px 0; border-bottom:1px solid var(--line-soft);
+      vertical-align:top; color:var(--ink-2); }
+    td.lbl { color:var(--ink); font-weight:500; white-space:nowrap; }
+    .hit, .miss, .na, .extra { font-size:10.5px; padding:2px 8px; border-radius:20px; white-space:nowrap; }
+    .hit { background:var(--hit-bg); color:var(--hit); }
+    .miss { background:var(--miss-bg); color:var(--miss); }
+    .na { background:var(--line-soft); color:var(--ink-3); }
+    .extra { background:#e4ecf5; color:var(--navy-soft); }
+    code { font-family:var(--mono); font-size:10.5px; padding:1px 6px; margin:0 3px 3px 0;
+      display:inline-block; background:var(--paper); border:1px solid var(--line);
+      border-radius:3px; color:var(--ink-3); }
+    ol.walk { list-style:none; counter-reset:w; margin-top:4px; }
+    ol.walk li { counter-increment:w; position:relative; padding:0 0 16px 30px; }
+    ol.walk li::before { content:counter(w); position:absolute; left:0; top:1px; width:19px; height:19px;
+      border-radius:50%; background:var(--navy); color:#fff; font-size:10px; font-weight:600;
+      display:grid; place-items:center; }
+    ol.walk .who { font-weight:600; color:var(--navy); margin-right:8px; }
+    ol.walk .act { font-size:10px; text-transform:uppercase; letter-spacing:.7px; color:var(--ink-3); }
+    ol.walk p { margin-top:4px; color:var(--ink-2); font-size:12.5px; }
+    ol.walk p.tl { margin-top:6px; }
+    table.cash { width:100%; border-collapse:collapse; font-size:13px; }
+    table.cash th { text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.7px;
+      color:var(--ink-3); font-weight:600; padding:0 12px 7px 0; border-bottom:1px solid var(--line); }
+    table.cash td { padding:9px 12px 9px 0; border-bottom:1px solid var(--line-soft); color:var(--ink-2); }
+    table.cash td.n { text-align:right; font-family:var(--mono); font-size:12px;
+      font-variant-numeric:tabular-nums; color:var(--ink); }
+    table.cash td.out { color:var(--accent); }
+    table.cash td.zero { color:var(--ink-3); }
+    table.cash tr.total td { border-top:2px solid var(--line); border-bottom:none; padding-top:11px;
+      font-weight:600; color:var(--navy); }
+    .why { color:var(--ink-2); font-size:12.5px; }
+    .note { background:var(--paper); border:1px solid var(--line); border-left:none;
+      border-radius:5px; padding:14px 16px; margin-top:20px; font-size:12.5px; color:var(--ink-2); }
+    .note strong { color:var(--navy); }
+    h3.q { font-family:var(--serif); font-size:17px; font-weight:400; color:var(--navy);
+      margin:30px 0 10px; }
+    h3.q:first-child { margin-top:0; }
+    h4.sub { font-size:12px; font-weight:600; color:var(--ink); margin:18px 0 6px; }
+    .tab-content p.body { margin-bottom:12px; color:var(--ink-2); }
+    .tab-content ul.body { margin:0 0 14px 18px; color:var(--ink-2); }
+    .tab-content ul.body li { margin-bottom:7px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Campus Customs Multi-Agent Operations</h1>
+            <p>Three-Ticket Resolution Plan & Actual Outcomes</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('ticket101')">Ticket 101</button>
+            <button class="tab-button" onclick="switchTab('ticket102')">Ticket 102</button>
+            <button class="tab-button" onclick="switchTab('ticket103')">Ticket 103</button>
+            <button class="tab-button" onclick="switchTab('cache')">Cache</button>
+            <button class="tab-button" onclick="switchTab('reflection')">Reflection</button>
+        </div>
+        
+        <!-- Ticket 101 -->
+        <div id="ticket101" class="tab-content active">
+            <div class="ticket-info">
+                <strong>Ticket 101:</strong> Customer Order (Tauhid Zaman) — Bulldog tee CC-TEE-WHITE size S, qty 1
+            </div>
+            
+            <div class="ticket-section">
+                <div class="section-title">Expected Resolution Path</div>
+                <div class="section-content">Who Boss Calls First & Why:
+The boss is going to call inventory because this involves an out of stock item and we first have to see how many are left and we have zero.
+
+Agent Delegations:
+We're going to call accounting because we see that we have an invoice that is overdue and that would go to our accounting agents because it has to do with payments and billing. Then we're also going to go to customer service because we need to draft a message to our customer to say that the tee is going to be back in stock and that there are none currently, but we will have to get them reprinted and we'll get back to you with available information. So there's also going to be a drafted message for a customer. The restock is also going to be in the call to the inventory to try to figure out where we can get it from. And we're going to get it from Bulldog Print Co. with a five-day lead time. So honestly, that's everyone but facilities is being called by the boss because it's such a complex problem.
+
+MCP Tools:
+- get_tickets (show the ticket)
+- get_inventory_stock (check stock for CC-TEE-WHITE S)
+- get_open_invoices_for_vendor (see that we have an overdue invoice)
+- get_vendors (decide where we should get it from)
+- get_pricing (unit cost, list price, calculated margin for printing decision)
+- log_payment (once the customer gets the good, we actually need to put in what the item was and what is included in the invoice so we can actually ship out the order)</div>
+            </div>
+            
+            <div class="ticket-section">
+                <div class="section-title">Actual Resolution (Post-Run)</div>
+                <div class="section-content actual"><p class="verdict-line">Final status: <strong>resolved</strong>. Balance went from <strong>$3,400.00</strong> to <strong>$2,560.00</strong> (−$840.00). One human approval: vendor payment, Invoice 501, $840.00, released by Desk operator.</p>
+<div class="cmp-title">Plan vs. run</div>
+<table class="cmp"><thead><tr><th>&nbsp;</th><th>Expected</th><th>Actual</th><th>&nbsp;</th></tr></thead>
+<tbody><tr><td class='lbl'>Who Boss called first</td><td>Inventory</td><td>Inventory</td><td><span class="hit">match</span></td></tr><tr><td class='lbl'>Agents involved</td><td>Boss, Inventory, Accounting, Customer Service</td><td>Boss, Inventory, Accounting, Customer Service</td><td><span class="hit">match</span></td></tr></tbody></table>
+<div class="cmp-title">MCP tools</div>
+<table class="cmp tools"><thead><tr><th>Tool</th><th>Result</th><th>Note</th></tr></thead>
+<tbody><tr><td><code>get_tickets</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>get_inventory_stock</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>get_open_invoices_for_vendor</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>get_vendors</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>get_pricing</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>log_payment</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>get_cash_balance</code></td><td><span class='extra'>extra</span></td><td>used but not in the plan</td></tr></tbody></table>
+<div class="cmp-title">What actually happened, step by step</div>
+<ol class="walk"><li><span class='who'>Boss</span><span class='act'>Route ticket</span><p>Customer order from Tauhid Zaman for Bulldog tee (CC-TEE-WHITE, size S, qty 1). Stock issue suspected, so inventory goes first.</p><p class='tl'><code>get_tickets</code></p></li><li><span class='who'>Inventory</span><span class='act'>Check stock</span><p>Classic Bulldog Tee size S in Aisle B: 0 on hand, 1 needed, short 1. Bulldog Print Co can reprint in 5 days, but they hold an unpaid invoice and will not ship until it clears. Handing to Accounting.</p><p class='tl'><code>get_inventory_stock</code><code>get_vendors</code></p></li><li><span class='who'>Accounting</span><span class='act'>Clear vendor gate</span><p>Invoice 501 to Bulldog Print Co for $840.00 (Rush reprint CC-TEE-WHITE S) is 3 days overdue. Checking balance is $3,400.00, so there is room. Payment prepared, waiting on a human.</p><p class='tl'><code>get_open_invoices_for_vendor</code><code>get_cash_balance</code></p></li><li><span class='who'>Customer Service</span><span class='act'>Draft reply</span><p>Drafted for Tauhid Zaman: size S is out of stock today, a reprint is on the way with a 5-day lead once the vendor is cleared, and we will confirm a date before charging. Held internally for review.</p><p class='tl'><code>get_pricing</code></p></li><li><span class='who'>Boss</span><span class='act'>Close out</span><p>Payment is prepared and waiting on a human. The ticket stays open until it clears.</p></li><li><span class='who'>Human</span><span class='act'>Approve payment</span><p>Desk operator approved $840.00 (vendor_payment, ref 501).</p></li><li><span class='who'>Accounting</span><span class='act'>Record payment</span><p>Paid from checking. Balance $3,400.00 to $2,560.00. Invoice 501 marked paid.</p><p class='tl'><code>log_payment</code></p></li></ol></div>
+            </div>
+        </div>
+        
+        <!-- Ticket 102 -->
+        <div id="ticket102" class="tab-content">
+            <div class="ticket-info">
+                <strong>Ticket 102:</strong> Rent Notice (Elm City Properties) — Chapel Street shop, $2400, due 2026-09-02
+            </div>
+            
+            <div class="ticket-section">
+                <div class="section-title">Expected Resolution Path</div>
+                <div class="section-content">Who Boss Calls First & Why:
+The boss should call the facilities person first because they are the ones who are in charge of the shop space, including leases and rent. Ticket 102 has to do with our Chapel Street rent being due.
+
+Agent Delegations:
+After the facilities is called, it will go to the accountant because we're looking at an outflow of cash that's being used to pay rent and the human should be approving that. Even though it's enough to pay the rent, we still want human approval in the loop because a human might be planning to make another expense or charge.
+
+MCP Tools:
+- get_tickets (show us the ticket)
+- get_lease_details (get Chapel Street rent details)
+- get_cash_balance (see what we have in our account)
+- get_all_leases (see full lease portfolio)</div>
+            </div>
+            
+            <div class="ticket-section">
+                <div class="section-title">Actual Resolution (Post-Run)</div>
+                <div class="section-content actual"><p class="verdict-line">Final status: <strong>resolved</strong>. Balance went from <strong>$2,560.00</strong> to <strong>$160.00</strong> (−$2,400.00). One human approval: rent payment, Lease 1, $2,400.00, released by Desk operator.</p>
+<div class="cmp-title">Plan vs. run</div>
+<table class="cmp"><thead><tr><th>&nbsp;</th><th>Expected</th><th>Actual</th><th>&nbsp;</th></tr></thead>
+<tbody><tr><td class='lbl'>Who Boss called first</td><td>Facilities</td><td>Facilities</td><td><span class="hit">match</span></td></tr><tr><td class='lbl'>Agents involved</td><td>Boss, Facilities, Accounting</td><td>Boss, Facilities, Accounting</td><td><span class="hit">match</span></td></tr></tbody></table>
+<div class="cmp-title">MCP tools</div>
+<table class="cmp tools"><thead><tr><th>Tool</th><th>Result</th><th>Note</th></tr></thead>
+<tbody><tr><td><code>get_tickets</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>get_lease_details</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>get_cash_balance</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>get_all_leases</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>log_payment</code></td><td><span class='extra'>extra</span></td><td>used but not in the plan</td></tr></tbody></table>
+<div class="cmp-title">What actually happened, step by step</div>
+<ol class="walk"><li><span class='who'>Boss</span><span class='act'>Route ticket</span><p>Rent notice from Elm City Properties. Facilities owns the shop space, so it starts there and moves to Accounting for the cash side.</p><p class='tl'><code>get_tickets</code></p></li><li><span class='who'>Facilities</span><span class='act'>Check lease</span><p>Chapel Street shop under Elm City Properties: $2,400.00 due 2026-09-02, 2 days out. No grace period on file. Passing the amount and the deadline to Accounting.</p><p class='tl'><code>get_lease_details</code><code>get_all_leases</code></p></li><li><span class='who'>Accounting</span><span class='act'>Prepare rent</span><p>Checking balance is $2,560.00. Rent of $2,400.00 leaves $160.00. Funds are sufficient, but rent is the largest outflow on the board, so it goes to a human rather than straight through.</p><p class='tl'><code>get_cash_balance</code></p></li><li><span class='who'>Boss</span><span class='act'>Close out</span><p>Payment is prepared and waiting on a human. The ticket stays open until it clears.</p></li><li><span class='who'>Human</span><span class='act'>Approve payment</span><p>Desk operator approved $2,400.00 (rent_payment, ref 1).</p></li><li><span class='who'>Accounting</span><span class='act'>Record payment</span><p>Paid from checking. Balance $2,560.00 to $160.00.</p><p class='tl'><code>log_payment</code></p></li></ol></div>
+            </div>
+        </div>
+        
+        <!-- Ticket 103 -->
+        <div id="ticket103" class="tab-content">
+            <div class="ticket-info">
+                <strong>Ticket 103:</strong> Price Override (Yale AI Club) — CC-HOOD-NAVY size M, qty 20, bulk discount request
+            </div>
+            
+            <div class="ticket-section">
+                <div class="section-title">Expected Resolution Path</div>
+                <div class="section-content">Who Boss Calls First & Why:
+The boss should definitely call inventory first to even see if the order is feasible and then go from there. Inventory is going to spot shortfalls. Here we have a 12 hoodie gap. Inventory is also checking to see if we have enough for the order.
+
+Agent Delegations:
+Boss is also going to call accounting because we're calculating margin and seeing if producing this good is feasible. Since we need to restock, we're going to go to Bulldog Print Co. with a five-day lead. That's going to call inventory as well for restocking. Then we're also going to send a message, probably customer service, saying hey, we're out of stock of all of these right now. We can get you a group discount potentially. That will also go back to the accounting agent for calculating a possible healthy margin with a group discount. Before this message has been sent, because we want to make sure that the margin is healthy enough before offering a concrete number for a discount.
+
+MCP Tools:
+- get_tickets (show the ticket)
+- get_inventory_stock (check stock for CC-HOOD-NAVY M)
+- get_open_invoices_for_vendor (check vendor payment status)
+- get_vendors (identify where to restock from)
+- get_pricing (calculate current margin and margin with group discount)
+- log_payment (once the customer gets the good, record what was shipped)</div>
+            </div>
+            
+            <div class="ticket-section">
+                <div class="section-title">Actual Resolution (Post-Run)</div>
+                <div class="section-content actual"><p class="verdict-line">Final status: <strong>resolved</strong>. No cash moved. Balance held at <strong>$160.00</strong>. No human approval was needed.</p>
+<div class="cmp-title">Plan vs. run</div>
+<table class="cmp"><thead><tr><th>&nbsp;</th><th>Expected</th><th>Actual</th><th>&nbsp;</th></tr></thead>
+<tbody><tr><td class='lbl'>Who Boss called first</td><td>Inventory</td><td>Inventory</td><td><span class="hit">match</span></td></tr><tr><td class='lbl'>Agents involved</td><td>Boss, Inventory, Accounting, Customer Service</td><td>Boss, Inventory, Accounting, Customer Service</td><td><span class="hit">match</span></td></tr></tbody></table>
+<div class="cmp-title">MCP tools</div>
+<table class="cmp tools"><thead><tr><th>Tool</th><th>Result</th><th>Note</th></tr></thead>
+<tbody><tr><td><code>get_tickets</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>get_inventory_stock</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>get_open_invoices_for_vendor</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>get_vendors</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>get_pricing</code></td><td><span class='hit'>fired</span></td><td>predicted and used</td></tr><tr><td><code>log_payment</code></td><td><span class='na'>not needed</span></td><td>no payment was required on this ticket, so nothing was logged</td></tr></tbody></table>
+<div class="cmp-title">What actually happened, step by step</div>
+<ol class="walk"><li><span class='who'>Boss</span><span class='act'>Route ticket</span><p>Yale AI Club wants 20 of CC-HOOD-NAVY size M at a discount. Inventory checks we can even fill it before Accounting prices it.</p><p class='tl'><code>get_tickets</code></p></li><li><span class='who'>Inventory</span><span class='act'>Feasibility check</span><p>Basic Hoodie Big Yale size M: 8 on hand against 20 requested, so 12 short. Bulldog Print Co covers the gap in 5 days. Their account is clear, so that lead time holds.</p><p class='tl'><code>get_inventory_stock</code><code>get_vendors</code><code>get_open_invoices_for_vendor</code></p></li><li><span class='who'>Accounting</span><span class='act'>Margin check</span><p>Unit cost $22.00 against list $58.00 is a 62.1% margin. Holding a 20% floor puts the lowest workable price at $27.50. A 15% bulk discount at $49.30 still returns 55.4%, or $986.00 on 20 units. Approved to quote, no payment involved.</p><p class='tl'><code>get_pricing</code></p></li><li><span class='who'>Customer Service</span><span class='act'>Draft quote</span><p>Drafted for Yale AI Club: 8 available now, remaining 12 in about 5 days, at $49.30 each for the full 20. Held internally until someone signs off.</p><p class='tl'><code>get_pricing</code></p></li><li><span class='who'>Boss</span><span class='act'>Close out</span><p>No cash moves on this one, so the ticket is resolved.</p></li></ol></div>
+            </div>
+        </div>
+        
+        <!-- Cache Tab -->
+        <div id="cache" class="tab-content">
+            <h3 class="q">Cash ledger for the full three-ticket run</h3>
+            <p class="body">Every number here is read out of <code>cash_accounts</code> and
+            <code>payments</code> in <code>data/campus_customs_new.db</code> after the run. The ledger
+            starts from a clean reset, so it reproduces exactly.</p>
+
+            <table class="cash">
+              <thead><tr><th>Ticket</th><th>What moved</th><th class="n">Balance before</th>
+                <th class="n">Change</th><th class="n">Balance after</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Starting checking balance</strong>
+                  <div class="why">Immediately after resetting the working database from the pristine
+                  <code>campus_customs.db</code>. All three tickets open, no payments on file.</div></td>
+                  <td>—</td><td class="n">—</td><td class="n zero">—</td>
+                  <td class="n">$3,400.00</td></tr>
+                <tr><td><strong>#101</strong> Bulldog tee<div class='why'>Invoice 501 to Bulldog Print Co, $840.00, three days overdue. The vendor will not ship a reprint while the invoice is open, so clearing it was the only way to unblock the tee. Released by a human.</div></td><td>vendor payment · Invoice 501</td><td class='n'>$3,400.00</td><td class='n out'>− $840.00</td><td class='n'>$2,560.00</td></tr><tr><td><strong>#102</strong> Rent due<div class='why'>Chapel Street shop rent, $2,400.00, due 2026-09-02 and two days out. Largest single outflow on the board, so Accounting prepared it and left it for a human rather than paying it straight through.</div></td><td>rent payment · Lease 1</td><td class='n'>$2,560.00</td><td class='n out'>− $2,400.00</td><td class='n'>$160.00</td></tr><tr><td><strong>#103</strong> Bulk hoodie discount<div class='why'>Nothing was bought or paid. Accounting only priced a quote — 20 hoodies at $49.30 each, $986.00 — which is money the shop would take in later, not money leaving now.</div></td><td>no payment</td><td class='n'>$160.00</td><td class='n zero'>—</td><td class='n'>$160.00</td></tr>
+                <tr class="total"><td>Ending checking balance</td><td>2 approved payments</td>
+                  <td class="n"></td><td class="n">− $3,240.00</td>
+                  <td class="n">$160.00</td></tr>
+              </tbody>
+            </table>
+
+            <div class="note"><strong>Reconciliation.</strong>
+              $3,400.00 − $840.00 − $2,400.00 = <strong>$160.00</strong>.
+              The <code>payments</code> table holds exactly two rows totalling $3,240.00, and
+              <code>cash_accounts.balance</code> reads <strong>$160.00</strong>. Ticket 103 resolved
+              without touching cash, so it does not appear in <code>payments</code> at all.
+            </div>
+
+            <h3 class="q">What carried between tickets</h3>
+            <p class="body">Running the three tickets in order left state behind that later tickets picked
+            up, which is the whole reason the board is worth watching in sequence:</p>
+            <ul class="body">
+              <li><strong>Invoice 501 opened the gate for 103.</strong> Ticket 101 paid Bulldog Print Co,
+              so by the time ticket 103 asked the same vendor for 12 hoodies, Inventory's
+              <code>get_open_invoices_for_vendor</code> check came back clear and the five-day lead time
+              actually held. Run 103 first and the same agent correctly refuses to promise a date.</li>
+              <li><strong>The balance is read live, never cached.</strong> Accounting on ticket 102 quoted
+              $2,560.00, not the $3,400.00 it would have seen at the start, because ticket 101's payment
+              had already landed.</li>
+              <li><strong>Stock counts did not move.</strong> Nothing shipped during this run, so inventory
+              is unchanged. The tee reprint and the hoodie top-up are both still inbound.</li>
+            </ul>
+        </div>
+
+        <div id="reflection" class="tab-content">
+            <h3 class="q">1. How would you evaluate the performance of the agents on each ticket, and why?</h3>
+
+            <h4 class="sub">Ticket 101 — Bulldog tee</h4>
+            <p class="body">I predicted that the boss would call inventory first because we have an out of
+            stock item, and then delegation would go to accounting for the overdue invoice, because we have
+            a payment and billing issue, and then there would be a customer service message drafted saying
+            the tee would be back in stock but there are none currently, and that we are getting the tees
+            reprinted. The agent matched my prediction, and all of the tools I predicted fired for that
+            specific agent.</p>
+            <p class="body">The boss routes the stock issue to inventory first. Inventory checks to see if
+            we have it on hand, finds that we are one short, and then recognizes that the vendor is holding
+            an unpaid invoice. So it routes the problem to accounting, and accounting checks the balance,
+            sees that the invoice is overdue to Bulldog Print, and asks for human verification. Lastly
+            there is a customer service email drafted to say that it is out of stock but we will confirm a
+            date of arrival before charging. This one also requires human approval. So I would say the
+            agent team on 101 did a really good job.</p>
+
+            <h4 class="sub">Ticket 102 — Rent due</h4>
+            <p class="body">I predicted that the boss would call facilities first, because they are the ones
+            in charge of the shop, and that includes rents and leases, and we are talking about Elm City
+            Properties here. Then I thought we would delegate to accounting because we are looking at a cash
+            outflow. This was an exact match on routing and on tools with what the model actually did, so I
+            would say the agents did a fairly good job with this one as well.</p>
+            <p class="body">When I ran the agent team, the boss noticed facilities was aligned with the shop
+            space, so it moved us to facilities and then funneled it to accounting because of the rent bill.
+            The boss closed out the loop after accounting required human approval. A box actually appears at
+            the bottom of my screen that says <em>needs your approval</em>, so I am notified and I can
+            approve the payment, and it says only I can release the cash. So it does a good job making sure
+            the human stays in the loop.</p>
+
+            <h4 class="sub">Ticket 103 — Bulk hoodie discount</h4>
+            <p class="body">I predicted that the boss would call inventory first to check for feasibility
+            and would see the gap of 12 hoodies. Then, since this involves looking at margins and restocks,
+            it would delegate to accounting and to customer service to send a message to the customer saying
+            we are waiting on goods to be shipped.</p>
+            <p class="body">103 matched my routing when I ran it. It went to inventory, then accounting,
+            then customer service. But on tools, <code>get_open_invoices_for_vendor</code> never actually
+            fired. That was a gate I had to manually go back and have Claude fix. It matters, because the
+            12 hoodies come from Bulldog Print Co — the same vendor sitting on the unpaid invoice from 101 —
+            so without that check the agent was willing to promise a five-day lead time it could not
+            actually honor.</p>
+
+            <h3 class="q">2. For each ticket, how did the actual compare to the expected plan?</h3>
+            <p class="body"><strong>101.</strong> Our actual was perfectly aligned with our expected plan.
+            It matched my first-call guess, and all of the tools and agents I thought would fire did fire.</p>
+            <p class="body"><strong>102.</strong> An exact match on both routing and tools. Boss to
+            facilities to accounting, with <code>get_tickets</code>, <code>get_lease_details</code>,
+            <code>get_all_leases</code> and <code>get_cash_balance</code> all firing the way I expected.</p>
+            <p class="body"><strong>103.</strong> The routing matched exactly, but the tools did not, because
+            <code>get_open_invoices_for_vendor</code> was missing. After the fix, inventory now reports that
+            Bulldog Print Co still holds invoice 501 and that the five-day lead only starts once it clears.
+            And because 101 runs first in the full run and pays that invoice, by the time 103 runs the same
+            check comes back clear and the lead time genuinely holds. That only shows up because the tool
+            fires — which is a good argument for predicting tools, not just agents.</p>
+
+            <h3 class="q">3. What would have been simpler as one agent with tools, and why?</h3>
+            <p class="body">Sometimes all the routing can get confusing, and it would be easier if I could
+            click on each specific agent to see its processes. Right now I am mostly getting a summary —
+            route ticket for boss, feasibility check for inventory — which is readable, but it can be a
+            little overwhelming or confusing, especially as this scales.</p>
+            <p class="body">Beyond that, a single agent with many tools would have been simpler for a shop
+            this size for a few concrete reasons:</p>
+            <ul class="body">
+              <li><strong>The routing is fixed anyway.</strong> A rent notice always goes to facilities then
+              accounting. A stock issue always starts at inventory. When the routing never really varies,
+              five agents are five chances to hand off wrong for a decision that was never in doubt.</li>
+              <li><strong>Every handoff loses context.</strong> Inventory already knows the vendor is blocked
+              by an unpaid invoice, but it has to re-explain that to accounting in a sentence instead of just
+              calling <code>get_open_invoices_for_vendor</code> itself. One agent holding the whole ticket
+              never has to re-state what it already knows.</li>
+              <li><strong>Nine tools is not a lot.</strong> The split exists to keep each prompt small, but
+              one agent can comfortably hold all nine of ours. The specialization is buying us less than it
+              costs at this scale.</li>
+              <li><strong>It would be cheaper and faster.</strong> Five prompts per ticket instead of one
+              is five times the tokens for a ticket whose whole resolution is three database reads and a
+              payment.</li>
+            </ul>
+            <p class="body">Where the team does earn its keep is the audit trail. Because each step is
+            attributed to a named agent, I can see exactly who checked what and which tool backed it up —
+            and for anything touching cash, that traceability is worth the overhead. So my honest read is
+            that the split is overkill for routing but genuinely useful for accountability.</p>
+
+            <h3 class="q">4. Three new problems Campus Customs might face that this agent team could solve
+            with the tools we built</h3>
+
+            <h4 class="sub">A. Quoting a brand new product</h4>
+            <p class="body">Say someone wants to carry a new crewneck. Boss routes it to inventory, which
+            uses <code>get_vendors</code> to find which supplier actually does apparel reprints and what
+            their lead time is, and <code>get_open_invoices_for_vendor</code> to confirm that supplier is
+            not blocked. Accounting then uses <code>get_pricing</code> on our comparable products to see
+            what the shop already charges and what margin it holds, and <code>get_cash_balance</code> to
+            check whether we can even fund an opening order. Customer service drafts the quote. Everything
+            needed for this already exists; nothing new has to be built.</p>
+
+            <h4 class="sub">B. A closure or supply disruption</h4>
+            <p class="body">There is a huge snowstorm and the shop is closed for the day, or it is near
+            Christmas and a supplier gets wiped out by a blizzard, so orders go on backlog. Boss routes it
+            to inventory, which uses <code>get_tickets</code> to pull every open order and
+            <code>get_inventory_stock</code> to see what is actually sitting on the shelf versus what was
+            promised, and <code>get_vendors</code> to see whose lead time just became fiction. Customer
+            service then drafts the notice for the mailing list, and because drafts stay internal on the
+            board, a human reads it before anything goes out. The same shape covers a holiday promotional
+            email, where accounting runs <code>get_pricing</code> first to find a discount that still clears
+            our margin floor before customer service names a number.</p>
+
+            <h4 class="sub">C. Which products are actually selling</h4>
+            <p class="body">We want to know which products move fastest, and in which sizes and colors.
+            Inventory uses <code>get_inventory_stock</code> across every SKU and size to find where we are
+            at zero and where we are overstocked — right now that would flag the tee in size S and the crest
+            mug both at zero, while size L sits at 14. Accounting pairs that with
+            <code>get_pricing</code> to show which of those SKUs are worth restocking first by margin, and
+            <code>get_cash_balance</code> to say what we can afford this week. The output is a restock
+            priority list that accounting can hand to inventory, which also tells us how fast the
+            reshipments actually need to come in.</p>
+
+            <h3 class="q">5. Three new problems this agent team could NOT solve with the tools we built</h3>
+
+            <h4 class="sub">A. Scheduling and trading employee shifts</h4>
+            <p class="body">We have no system set up for this at all. There is no staff table, no
+            availability, no shift calendar — the database knows about products, vendors, leases and cash,
+            and nothing about people. <strong>What it would need:</strong> a <code>staff</code> and
+            <code>shifts</code> schema, tools like <code>get_shift_schedule</code>,
+            <code>get_staff_availability</code>, <code>propose_shift_swap</code> and
+            <code>confirm_shift_swap</code>, and a new Scheduling agent that owns coverage rules — minimum
+            staff per shift, who is trained on the register — with the same human approval gate we use for
+            cash, since a swap that leaves the shop uncovered is its own kind of expensive.</p>
+
+            <h4 class="sub">B. Talking to suppliers, or finding new ones</h4>
+            <p class="body">We currently cannot communicate with suppliers directly, and we cannot discover
+            new ones. Our <code>vendors</code> table has exactly three rows that someone typed in, and the
+            shop rules explicitly say do not call vendors — every draft stays internal on the board. So the
+            idea in question 4A, where inventory and accounting work out what they want made and send it to
+            a producer, stops right at the point of actually sending it. <strong>What it would need:</strong>
+            an outbound channel — a <code>send_vendor_rfq</code> tool and a real email or portal
+            integration — plus a <code>search_supplier_directory</code> tool hitting an external source, and
+            a Procurement agent that can run a quote comparison across replies. It also needs a human
+            approval gate on anything outbound, for the same reason payments have one.</p>
+
+            <h4 class="sub">C. Returns, refunds, and anything that puts money back</h4>
+            <p class="body">Our whole cash model only runs one direction. The shop rules say cash only flows
+            out, there is no revenue path in the database, and <code>log_payment</code> and
+            <code>/approve-payment</code> only ever subtract from checking. So the moment a customer returns
+            a hoodie or disputes a charge, the team has nowhere to put it — there is no returns table, no way
+            to reverse a payment, and no record that a sale ever brought money in.
+            <strong>What it would need:</strong> a <code>sales</code> and <code>returns</code> schema so a
+            sale exists as a record in the first place, tools like <code>log_sale</code>,
+            <code>log_refund</code> and <code>get_sales_history</code>, a cash model that moves both
+            directions, and a Returns agent working with accounting on restocking fees and refund
+            eligibility — again behind human approval, because a refund is a payment.</p>
+
+            <div class="note"><strong>Two alternates for C</strong>, if you would rather swap it:
+            <strong>(1) Confirming a delivery actually arrived.</strong> The board can mark invoice 501 paid
+            and say the reprint is coming in five days, but nothing in the system ever learns whether the
+            box showed up. It would need a <code>receiving</code> table, a <code>log_receipt</code> tool and
+            carrier tracking. <strong>(2) Reconciling what we forecast against what we sold.</strong>
+            Accounting can compute that a hoodie at $49.30 returns 55.4% margin, but it can never check
+            whether the Yale AI Club actually bought them, because no sale is ever recorded.</div>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active to clicked button
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

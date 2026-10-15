@@ -1,0 +1,181 @@
+{
+  "run": {
+    "shop_date": "2026-08-31",
+    "database": "data/campus_customs_new.db",
+    "starting_checking_balance": 3400.0,
+    "ending_checking_balance": 160.0,
+    "total_approved_payments": 3240.0,
+    "human_approvals_required": 2
+  },
+  "tickets": [
+    {
+      "id": 101,
+      "subject": "Bulldog tee",
+      "type": "customer_order",
+      "requester": "Tauhid Zaman",
+      "final_status": "resolved",
+      "outcome": "Vendor gate cleared and the reprint released. Invoice 501 paid, so Bulldog Print Co will ship. The customer was told the truth about the delay instead of a date we could not keep.",
+      "agents": [
+        {
+          "agent": "Boss",
+          "actions": [
+            "Route ticket",
+            "Close out"
+          ],
+          "tools_used": [
+            "get_tickets"
+          ]
+        },
+        {
+          "agent": "Inventory",
+          "actions": [
+            "Check stock"
+          ],
+          "tools_used": [
+            "get_inventory_stock",
+            "get_vendors"
+          ]
+        },
+        {
+          "agent": "Accounting",
+          "actions": [
+            "Clear vendor gate",
+            "Record payment"
+          ],
+          "tools_used": [
+            "get_open_invoices_for_vendor",
+            "get_cash_balance",
+            "log_payment"
+          ]
+        },
+        {
+          "agent": "Customer Service",
+          "actions": [
+            "Draft reply"
+          ],
+          "tools_used": [
+            "get_pricing"
+          ]
+        }
+      ],
+      "human_approvals": {
+        "count": 1,
+        "approvals": [
+          {
+            "kind": "vendor_payment",
+            "reference": "Invoice 501",
+            "amount": 840.0,
+            "approved_by": "Desk operator",
+            "description": "Desk operator approved $840.00 (vendor_payment, ref 501)."
+          }
+        ]
+      }
+    },
+    {
+      "id": 102,
+      "subject": "Rent due",
+      "type": "rent_notice",
+      "requester": "Elm City Properties",
+      "final_status": "resolved",
+      "outcome": "Chapel Street rent paid two days before it was due, with a human releasing the cash.",
+      "agents": [
+        {
+          "agent": "Boss",
+          "actions": [
+            "Route ticket",
+            "Close out"
+          ],
+          "tools_used": [
+            "get_tickets"
+          ]
+        },
+        {
+          "agent": "Facilities",
+          "actions": [
+            "Check lease"
+          ],
+          "tools_used": [
+            "get_lease_details",
+            "get_all_leases"
+          ]
+        },
+        {
+          "agent": "Accounting",
+          "actions": [
+            "Prepare rent",
+            "Record payment"
+          ],
+          "tools_used": [
+            "get_cash_balance",
+            "log_payment"
+          ]
+        }
+      ],
+      "human_approvals": {
+        "count": 1,
+        "approvals": [
+          {
+            "kind": "rent_payment",
+            "reference": "Lease 1",
+            "amount": 2400.0,
+            "approved_by": "Desk operator",
+            "description": "Desk operator approved $2,400.00 (rent_payment, ref 1)."
+          }
+        ]
+      }
+    },
+    {
+      "id": 103,
+      "subject": "Bulk hoodie discount",
+      "type": "price_override",
+      "requester": "Yale AI Club",
+      "final_status": "resolved",
+      "outcome": "Bulk quote prepared at a price that holds margin. No cash moved; the quote waits on a human to send.",
+      "agents": [
+        {
+          "agent": "Boss",
+          "actions": [
+            "Route ticket",
+            "Close out"
+          ],
+          "tools_used": [
+            "get_tickets"
+          ]
+        },
+        {
+          "agent": "Inventory",
+          "actions": [
+            "Feasibility check"
+          ],
+          "tools_used": [
+            "get_inventory_stock",
+            "get_vendors",
+            "get_open_invoices_for_vendor"
+          ]
+        },
+        {
+          "agent": "Accounting",
+          "actions": [
+            "Margin check"
+          ],
+          "tools_used": [
+            "get_pricing"
+          ]
+        },
+        {
+          "agent": "Customer Service",
+          "actions": [
+            "Draft quote"
+          ],
+          "tools_used": [
+            "get_pricing"
+          ]
+        }
+      ],
+      "human_approvals": {
+        "count": 0,
+        "approvals": []
+      }
+    }
+  ]
+}

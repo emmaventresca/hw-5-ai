@@ -1,0 +1,1978 @@
+{
+  "audit_trail": [
+    {
+      "timestamp": "2026-10-14T15:55:46.547688",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Yale AI Club wants 20 of CC-HOOD-NAVY size M at a discount. Inventory checks we can even fill it before Accounting prices it.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T15:55:46.547956",
+      "agent": "Inventory",
+      "action": "Feasibility check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors"
+      ],
+      "output": "Basic Hoodie Big Yale size M: 8 on hand against 20 requested, so 12 short. Bulldog Print Co covers the gap in 5 days. Fillable, but not same-day.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T15:55:46.548469",
+      "agent": "Accounting",
+      "action": "Margin check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Unit cost $22.00 against list $58.00 is a 62.1% margin. Holding a 20% floor puts the lowest workable price at $27.50. A 15% bulk discount at $49.30 still returns 55.4%, or $986.00 on 20 units. Approved to quote, no payment involved.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T15:55:46.548478",
+      "agent": "Customer Service",
+      "action": "Draft quote",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Yale AI Club: 8 available now, remaining 12 in about 5 days, at $49.30 each for the full 20. Held internally until someone signs off.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T15:55:46.548480",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 103,
+      "tools_used": [],
+      "output": "No cash moves on this one, so the ticket is resolved.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T15:56:36.571640",
+      "agent": "System",
+      "action": "Reset board",
+      "ticket_id": null,
+      "tools_used": [],
+      "output": "Working database restored from campus_customs.db. Starting checking balance $3,400.00. All tickets back to open.",
+      "status": "reset"
+    },
+    {
+      "timestamp": "2026-10-14T15:56:36.593196",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Yale AI Club wants 20 of CC-HOOD-NAVY size M at a discount. Inventory checks we can even fill it before Accounting prices it.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:56:36.593507",
+      "agent": "Inventory",
+      "action": "Feasibility check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors",
+        "get_open_invoices_for_vendor"
+      ],
+      "output": "Basic Hoodie Big Yale size M: 8 on hand against 20 requested, so 12 short. Bulldog Print Co covers the gap in 5 days. They still hold 1 unpaid invoice (501, $840.00) and will not ship until it clears, so the 5-day lead only starts once that is paid. Do not promise a date yet.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:56:36.593552",
+      "agent": "Accounting",
+      "action": "Margin check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Unit cost $22.00 against list $58.00 is a 62.1% margin. Holding a 20% floor puts the lowest workable price at $27.50. A 15% bulk discount at $49.30 still returns 55.4%, or $986.00 on 20 units. Approved to quote, no payment involved.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Unit cost",
+          "value": "$22.00"
+        },
+        {
+          "label": "List price",
+          "value": "$58.00"
+        },
+        {
+          "label": "Margin at list",
+          "value": "62.1%"
+        },
+        {
+          "label": "Lowest price holding a 20% floor",
+          "value": "$27.50"
+        },
+        {
+          "label": "Proposed bulk discount",
+          "value": "15% off list"
+        },
+        {
+          "label": "Discounted unit price",
+          "value": "$49.30"
+        },
+        {
+          "label": "Margin at that price",
+          "value": "55.4%"
+        },
+        {
+          "label": "Line total, 20 units",
+          "value": "$986.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T15:56:36.593559",
+      "agent": "Customer Service",
+      "action": "Draft quote",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Yale AI Club: 8 available now, remaining 12 in about 5 days, at $49.30 each for the full 20. Held internally until someone signs off.",
+      "status": "complete",
+      "draft": {
+        "to": "Yale AI Club",
+        "subject": "Quote \u2014 20 hoodies, size M",
+        "body": "Hi Yale AI Club,\n\nHappy to do a bulk rate on this. Here is where we land.\n\nWe have 8 of the Basic Hoodie Big Yale in size M on the shelf right now. The remaining 12 would come from a reprint with Bulldog Print Co, which runs about 5 days.\n\nOn price, we can do $49.30 per hoodie for the full 20, down from $58.00. That comes to $986.00 for the order.\n\nIf that works, tell me your deadline and I will confirm whether the reprint lands in time before you commit.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:56:36.593560",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 103,
+      "tools_used": [],
+      "output": "No cash moves on this one, so the ticket is resolved.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:57:38.229087",
+      "agent": "System",
+      "action": "Reset board",
+      "ticket_id": null,
+      "tools_used": [],
+      "output": "Working database restored from campus_customs.db. Starting checking balance $3,400.00. All tickets back to open.",
+      "status": "reset"
+    },
+    {
+      "timestamp": "2026-10-14T15:58:15.177390",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Customer order from Tauhid Zaman for Bulldog tee (CC-TEE-WHITE, size S, qty 1). Stock issue suspected, so inventory goes first.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:58:15.177665",
+      "agent": "Inventory",
+      "action": "Check stock",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors"
+      ],
+      "output": "Classic Bulldog Tee size S in Aisle B: 0 on hand, 1 needed, short 1. Bulldog Print Co can reprint in 5 days, but they hold an unpaid invoice and will not ship until it clears. Handing to Accounting.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:58:15.179985",
+      "agent": "Accounting",
+      "action": "Clear vendor gate",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_open_invoices_for_vendor",
+        "get_cash_balance"
+      ],
+      "output": "Invoice 501 to Bulldog Print Co for $840.00 (Rush reprint CC-TEE-WHITE S) is 3 days overdue. Checking balance is $3,400.00, so there is room. Payment prepared, waiting on a human.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Invoice 501 \u2014 Bulldog Print Co",
+          "value": "$840.00"
+        },
+        {
+          "label": "Due 2026-08-28",
+          "value": "3 days overdue"
+        },
+        {
+          "label": "Checking balance now",
+          "value": "$3,400.00"
+        },
+        {
+          "label": "Less this payment",
+          "value": "- $840.00"
+        },
+        {
+          "label": "Balance after",
+          "value": "$2,560.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T15:58:15.179996",
+      "agent": "Customer Service",
+      "action": "Draft reply",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Tauhid Zaman: size S is out of stock today, a reprint is on the way with a 5-day lead once the vendor is cleared, and we will confirm a date before charging. Held internally for review.",
+      "status": "complete",
+      "draft": {
+        "to": "Tauhid Zaman",
+        "subject": "Your Bulldog tee (size S) \u2014 a short delay",
+        "body": "Hi Tauhid,\n\nThanks for your order for the Bulldog tee in size S. We are out of that size on the shelf today, so I do not want to give you a ship date I cannot keep.\n\nWe have a reprint lined up with Bulldog Print Co, who run about 5 days once the order is released. As soon as that is confirmed I will email you the exact date, and we will not charge the card before then.\n\nIf you need it sooner than that, tell me and I will see what else we can do.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:58:15.180000",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 101,
+      "tools_used": [],
+      "output": "Payment is prepared and waiting on a human. The ticket stays open until it clears.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:58:50.719066",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Customer order from Tauhid Zaman for Bulldog tee (CC-TEE-WHITE, size S, qty 1). Stock issue suspected, so inventory goes first.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:58:50.719371",
+      "agent": "Inventory",
+      "action": "Check stock",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors"
+      ],
+      "output": "Classic Bulldog Tee size S in Aisle B: 0 on hand, 1 needed, short 1. Bulldog Print Co can reprint in 5 days, but they hold an unpaid invoice and will not ship until it clears. Handing to Accounting.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:58:50.719662",
+      "agent": "Accounting",
+      "action": "Clear vendor gate",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_open_invoices_for_vendor",
+        "get_cash_balance"
+      ],
+      "output": "Invoice 501 to Bulldog Print Co for $840.00 (Rush reprint CC-TEE-WHITE S) is 3 days overdue. Checking balance is $3,400.00, so there is room. Payment prepared, waiting on a human.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Invoice 501 \u2014 Bulldog Print Co",
+          "value": "$840.00"
+        },
+        {
+          "label": "Due 2026-08-28",
+          "value": "3 days overdue"
+        },
+        {
+          "label": "Checking balance now",
+          "value": "$3,400.00"
+        },
+        {
+          "label": "Less this payment",
+          "value": "- $840.00"
+        },
+        {
+          "label": "Balance after",
+          "value": "$2,560.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T15:58:50.719680",
+      "agent": "Customer Service",
+      "action": "Draft reply",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Tauhid Zaman: size S is out of stock today, a reprint is on the way with a 5-day lead once the vendor is cleared, and we will confirm a date before charging. Held internally for review.",
+      "status": "complete",
+      "draft": {
+        "to": "Tauhid Zaman",
+        "subject": "Your Bulldog tee (size S) \u2014 a short delay",
+        "body": "Hi Tauhid,\n\nThanks for your order for the Bulldog tee in size S. We are out of that size on the shelf today, so I do not want to give you a ship date I cannot keep.\n\nWe have a reprint lined up with Bulldog Print Co, who run about 5 days once the order is released. As soon as that is confirmed I will email you the exact date, and we will not charge the card before then.\n\nIf you need it sooner than that, tell me and I will see what else we can do.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:58:50.719716",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 101,
+      "tools_used": [],
+      "output": "Payment is prepared and waiting on a human. The ticket stays open until it clears.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:58:54.489552",
+      "agent": "Human",
+      "action": "Approve payment",
+      "ticket_id": 101,
+      "tools_used": [],
+      "output": "Desk operator approved $840.00 (vendor_payment, ref 501).",
+      "status": "approved"
+    },
+    {
+      "timestamp": "2026-10-14T15:58:54.489586",
+      "agent": "Accounting",
+      "action": "Record payment",
+      "ticket_id": 101,
+      "tools_used": [
+        "log_payment"
+      ],
+      "output": "Paid from checking. Balance $3,400.00 to $2,560.00. Invoice 501 marked paid.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T15:59:02.698441",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Rent notice from Elm City Properties. Facilities owns the shop space, so it starts there and moves to Accounting for the cash side.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:59:02.699079",
+      "agent": "Facilities",
+      "action": "Check lease",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_lease_details",
+        "get_all_leases"
+      ],
+      "output": "Chapel Street shop under Elm City Properties: $2,400.00 due 2026-09-02, 2 days out. No grace period on file. Passing the amount and the deadline to Accounting.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:59:02.699099",
+      "agent": "Accounting",
+      "action": "Prepare rent",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_cash_balance"
+      ],
+      "output": "Checking balance is $2,560.00. Rent of $2,400.00 leaves $160.00. Funds are sufficient, but rent is the largest outflow on the board, so it goes to a human rather than straight through.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Chapel Street shop monthly rent",
+          "value": "$2,400.00"
+        },
+        {
+          "label": "Due 2026-09-02",
+          "value": "2 days out"
+        },
+        {
+          "label": "Checking balance now",
+          "value": "$2,560.00"
+        },
+        {
+          "label": "Less this payment",
+          "value": "- $2,400.00"
+        },
+        {
+          "label": "Balance after",
+          "value": "$160.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T15:59:02.699114",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 102,
+      "tools_used": [],
+      "output": "Payment is prepared and waiting on a human. The ticket stays open until it clears.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:59:06.460906",
+      "agent": "Human",
+      "action": "Approve payment",
+      "ticket_id": 102,
+      "tools_used": [],
+      "output": "Desk operator approved $2,400.00 (rent_payment, ref 1).",
+      "status": "approved"
+    },
+    {
+      "timestamp": "2026-10-14T15:59:06.460937",
+      "agent": "Accounting",
+      "action": "Record payment",
+      "ticket_id": 102,
+      "tools_used": [
+        "log_payment"
+      ],
+      "output": "Paid from checking. Balance $2,560.00 to $160.00.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T15:59:09.594943",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Yale AI Club wants 20 of CC-HOOD-NAVY size M at a discount. Inventory checks we can even fill it before Accounting prices it.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:59:09.597635",
+      "agent": "Inventory",
+      "action": "Feasibility check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors",
+        "get_open_invoices_for_vendor"
+      ],
+      "output": "Basic Hoodie Big Yale size M: 8 on hand against 20 requested, so 12 short. Bulldog Print Co covers the gap in 5 days. Their account is clear, so that lead time holds.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:59:09.597718",
+      "agent": "Accounting",
+      "action": "Margin check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Unit cost $22.00 against list $58.00 is a 62.1% margin. Holding a 20% floor puts the lowest workable price at $27.50. A 15% bulk discount at $49.30 still returns 55.4%, or $986.00 on 20 units. Approved to quote, no payment involved.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Unit cost",
+          "value": "$22.00"
+        },
+        {
+          "label": "List price",
+          "value": "$58.00"
+        },
+        {
+          "label": "Margin at list",
+          "value": "62.1%"
+        },
+        {
+          "label": "Lowest price holding a 20% floor",
+          "value": "$27.50"
+        },
+        {
+          "label": "Proposed bulk discount",
+          "value": "15% off list"
+        },
+        {
+          "label": "Discounted unit price",
+          "value": "$49.30"
+        },
+        {
+          "label": "Margin at that price",
+          "value": "55.4%"
+        },
+        {
+          "label": "Line total, 20 units",
+          "value": "$986.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T15:59:09.597729",
+      "agent": "Customer Service",
+      "action": "Draft quote",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Yale AI Club: 8 available now, remaining 12 in about 5 days, at $49.30 each for the full 20. Held internally until someone signs off.",
+      "status": "complete",
+      "draft": {
+        "to": "Yale AI Club",
+        "subject": "Quote \u2014 20 hoodies, size M",
+        "body": "Hi Yale AI Club,\n\nHappy to do a bulk rate on this. Here is where we land.\n\nWe have 8 of the Basic Hoodie Big Yale in size M on the shelf right now. The remaining 12 would come from a reprint with Bulldog Print Co, which runs about 5 days.\n\nOn price, we can do $49.30 per hoodie for the full 20, down from $58.00. That comes to $986.00 for the order.\n\nIf that works, tell me your deadline and I will confirm whether the reprint lands in time before you commit.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:59:09.597731",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 103,
+      "tools_used": [],
+      "output": "No cash moves on this one, so the ticket is resolved.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:59:17.021492",
+      "agent": "System",
+      "action": "Reset board",
+      "ticket_id": null,
+      "tools_used": [],
+      "output": "Working database restored from campus_customs.db. Starting checking balance $3,400.00. All tickets back to open.",
+      "status": "reset"
+    },
+    {
+      "timestamp": "2026-10-14T15:59:22.930377",
+      "agent": "System",
+      "action": "Reset board",
+      "ticket_id": null,
+      "tools_used": [],
+      "output": "Working database restored from campus_customs.db. Starting checking balance $3,400.00. All tickets back to open.",
+      "status": "reset"
+    },
+    {
+      "timestamp": "2026-10-14T15:59:35.087318",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Customer order from Tauhid Zaman for Bulldog tee (CC-TEE-WHITE, size S, qty 1). Stock issue suspected, so inventory goes first.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:59:35.089153",
+      "agent": "Inventory",
+      "action": "Check stock",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors"
+      ],
+      "output": "Classic Bulldog Tee size S in Aisle B: 0 on hand, 1 needed, short 1. Bulldog Print Co can reprint in 5 days, but they hold an unpaid invoice and will not ship until it clears. Handing to Accounting.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:59:35.089505",
+      "agent": "Accounting",
+      "action": "Clear vendor gate",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_open_invoices_for_vendor",
+        "get_cash_balance"
+      ],
+      "output": "Invoice 501 to Bulldog Print Co for $840.00 (Rush reprint CC-TEE-WHITE S) is 3 days overdue. Checking balance is $3,400.00, so there is room. Payment prepared, waiting on a human.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Invoice 501 \u2014 Bulldog Print Co",
+          "value": "$840.00"
+        },
+        {
+          "label": "Due 2026-08-28",
+          "value": "3 days overdue"
+        },
+        {
+          "label": "Checking balance now",
+          "value": "$3,400.00"
+        },
+        {
+          "label": "Less this payment",
+          "value": "- $840.00"
+        },
+        {
+          "label": "Balance after",
+          "value": "$2,560.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T15:59:35.089536",
+      "agent": "Customer Service",
+      "action": "Draft reply",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Tauhid Zaman: size S is out of stock today, a reprint is on the way with a 5-day lead once the vendor is cleared, and we will confirm a date before charging. Held internally for review.",
+      "status": "complete",
+      "draft": {
+        "to": "Tauhid Zaman",
+        "subject": "Your Bulldog tee (size S) \u2014 a short delay",
+        "body": "Hi Tauhid,\n\nThanks for your order for the Bulldog tee in size S. We are out of that size on the shelf today, so I do not want to give you a ship date I cannot keep.\n\nWe have a reprint lined up with Bulldog Print Co, who run about 5 days once the order is released. As soon as that is confirmed I will email you the exact date, and we will not charge the card before then.\n\nIf you need it sooner than that, tell me and I will see what else we can do.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:59:35.089569",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 101,
+      "tools_used": [],
+      "output": "Payment is prepared and waiting on a human. The ticket stays open until it clears.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T15:59:46.150618",
+      "agent": "Human",
+      "action": "Approve payment",
+      "ticket_id": 101,
+      "tools_used": [],
+      "output": "Desk operator approved $840.00 (vendor_payment, ref 501).",
+      "status": "approved"
+    },
+    {
+      "timestamp": "2026-10-14T15:59:46.150636",
+      "agent": "Accounting",
+      "action": "Record payment",
+      "ticket_id": 101,
+      "tools_used": [
+        "log_payment"
+      ],
+      "output": "Paid from checking. Balance $3,400.00 to $2,560.00. Invoice 501 marked paid.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T16:00:12.038571",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Rent notice from Elm City Properties. Facilities owns the shop space, so it starts there and moves to Accounting for the cash side.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:00:12.038930",
+      "agent": "Facilities",
+      "action": "Check lease",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_lease_details",
+        "get_all_leases"
+      ],
+      "output": "Chapel Street shop under Elm City Properties: $2,400.00 due 2026-09-02, 2 days out. No grace period on file. Passing the amount and the deadline to Accounting.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:00:12.038949",
+      "agent": "Accounting",
+      "action": "Prepare rent",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_cash_balance"
+      ],
+      "output": "Checking balance is $2,560.00. Rent of $2,400.00 leaves $160.00. Funds are sufficient, but rent is the largest outflow on the board, so it goes to a human rather than straight through.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Chapel Street shop monthly rent",
+          "value": "$2,400.00"
+        },
+        {
+          "label": "Due 2026-09-02",
+          "value": "2 days out"
+        },
+        {
+          "label": "Checking balance now",
+          "value": "$2,560.00"
+        },
+        {
+          "label": "Less this payment",
+          "value": "- $2,400.00"
+        },
+        {
+          "label": "Balance after",
+          "value": "$160.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T16:00:12.038969",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 102,
+      "tools_used": [],
+      "output": "Payment is prepared and waiting on a human. The ticket stays open until it clears.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:00:22.553180",
+      "agent": "Human",
+      "action": "Approve payment",
+      "ticket_id": 102,
+      "tools_used": [],
+      "output": "Desk operator approved $2,400.00 (rent_payment, ref 1).",
+      "status": "approved"
+    },
+    {
+      "timestamp": "2026-10-14T16:00:22.553232",
+      "agent": "Accounting",
+      "action": "Record payment",
+      "ticket_id": 102,
+      "tools_used": [
+        "log_payment"
+      ],
+      "output": "Paid from checking. Balance $2,560.00 to $160.00.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T16:00:49.788755",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Yale AI Club wants 20 of CC-HOOD-NAVY size M at a discount. Inventory checks we can even fill it before Accounting prices it.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:00:49.788989",
+      "agent": "Inventory",
+      "action": "Feasibility check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors",
+        "get_open_invoices_for_vendor"
+      ],
+      "output": "Basic Hoodie Big Yale size M: 8 on hand against 20 requested, so 12 short. Bulldog Print Co covers the gap in 5 days. Their account is clear, so that lead time holds.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:00:49.789087",
+      "agent": "Accounting",
+      "action": "Margin check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Unit cost $22.00 against list $58.00 is a 62.1% margin. Holding a 20% floor puts the lowest workable price at $27.50. A 15% bulk discount at $49.30 still returns 55.4%, or $986.00 on 20 units. Approved to quote, no payment involved.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Unit cost",
+          "value": "$22.00"
+        },
+        {
+          "label": "List price",
+          "value": "$58.00"
+        },
+        {
+          "label": "Margin at list",
+          "value": "62.1%"
+        },
+        {
+          "label": "Lowest price holding a 20% floor",
+          "value": "$27.50"
+        },
+        {
+          "label": "Proposed bulk discount",
+          "value": "15% off list"
+        },
+        {
+          "label": "Discounted unit price",
+          "value": "$49.30"
+        },
+        {
+          "label": "Margin at that price",
+          "value": "55.4%"
+        },
+        {
+          "label": "Line total, 20 units",
+          "value": "$986.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T16:00:49.789100",
+      "agent": "Customer Service",
+      "action": "Draft quote",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Yale AI Club: 8 available now, remaining 12 in about 5 days, at $49.30 each for the full 20. Held internally until someone signs off.",
+      "status": "complete",
+      "draft": {
+        "to": "Yale AI Club",
+        "subject": "Quote \u2014 20 hoodies, size M",
+        "body": "Hi Yale AI Club,\n\nHappy to do a bulk rate on this. Here is where we land.\n\nWe have 8 of the Basic Hoodie Big Yale in size M on the shelf right now. The remaining 12 would come from a reprint with Bulldog Print Co, which runs about 5 days.\n\nOn price, we can do $49.30 per hoodie for the full 20, down from $58.00. That comes to $986.00 for the order.\n\nIf that works, tell me your deadline and I will confirm whether the reprint lands in time before you commit.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:00:49.789101",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 103,
+      "tools_used": [],
+      "output": "No cash moves on this one, so the ticket is resolved.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:28:24.232602",
+      "agent": "System",
+      "action": "Reset board",
+      "ticket_id": null,
+      "tools_used": [],
+      "output": "Working database restored from campus_customs.db. Starting checking balance $3,400.00. All tickets back to open.",
+      "status": "reset"
+    },
+    {
+      "timestamp": "2026-10-14T16:28:32.789881",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Customer order from Tauhid Zaman for Bulldog tee (CC-TEE-WHITE, size S, qty 1). Stock issue suspected, so inventory goes first.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:28:32.791315",
+      "agent": "Inventory",
+      "action": "Check stock",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors"
+      ],
+      "output": "Classic Bulldog Tee size S in Aisle B: 0 on hand, 1 needed, short 1. Bulldog Print Co can reprint in 5 days, but they hold an unpaid invoice and will not ship until it clears. Handing to Accounting.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:28:32.792016",
+      "agent": "Accounting",
+      "action": "Clear vendor gate",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_open_invoices_for_vendor",
+        "get_cash_balance"
+      ],
+      "output": "Invoice 501 to Bulldog Print Co for $840.00 (Rush reprint CC-TEE-WHITE S) is 3 days overdue. Checking balance is $3,400.00, so there is room. Payment prepared, waiting on a human.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Invoice 501 \u2014 Bulldog Print Co",
+          "value": "$840.00"
+        },
+        {
+          "label": "Due 2026-08-28",
+          "value": "3 days overdue"
+        },
+        {
+          "label": "Checking balance now",
+          "value": "$3,400.00"
+        },
+        {
+          "label": "Less this payment",
+          "value": "- $840.00"
+        },
+        {
+          "label": "Balance after",
+          "value": "$2,560.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T16:28:32.792034",
+      "agent": "Customer Service",
+      "action": "Draft reply",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Tauhid Zaman: size S is out of stock today, a reprint is on the way with a 5-day lead once the vendor is cleared, and we will confirm a date before charging. Held internally for review.",
+      "status": "complete",
+      "draft": {
+        "to": "Tauhid Zaman",
+        "subject": "Your Bulldog tee (size S) \u2014 a short delay",
+        "body": "Hi Tauhid,\n\nThanks for your order for the Bulldog tee in size S. We are out of that size on the shelf today, so I do not want to give you a ship date I cannot keep.\n\nWe have a reprint lined up with Bulldog Print Co, who run about 5 days once the order is released. As soon as that is confirmed I will email you the exact date, and we will not charge the card before then.\n\nIf you need it sooner than that, tell me and I will see what else we can do.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:28:32.792059",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 101,
+      "tools_used": [],
+      "output": "Payment is prepared and waiting on a human. The ticket stays open until it clears.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:28:47.153667",
+      "agent": "Human",
+      "action": "Approve payment",
+      "ticket_id": 101,
+      "tools_used": [],
+      "output": "Desk operator approved $840.00 (vendor_payment, ref 501).",
+      "status": "approved"
+    },
+    {
+      "timestamp": "2026-10-14T16:28:47.153716",
+      "agent": "Accounting",
+      "action": "Record payment",
+      "ticket_id": 101,
+      "tools_used": [
+        "log_payment"
+      ],
+      "output": "Paid from checking. Balance $3,400.00 to $2,560.00. Invoice 501 marked paid.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T16:29:00.074810",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Rent notice from Elm City Properties. Facilities owns the shop space, so it starts there and moves to Accounting for the cash side.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:29:00.074945",
+      "agent": "Facilities",
+      "action": "Check lease",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_lease_details",
+        "get_all_leases"
+      ],
+      "output": "Chapel Street shop under Elm City Properties: $2,400.00 due 2026-09-02, 2 days out. No grace period on file. Passing the amount and the deadline to Accounting.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:29:00.074956",
+      "agent": "Accounting",
+      "action": "Prepare rent",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_cash_balance"
+      ],
+      "output": "Checking balance is $2,560.00. Rent of $2,400.00 leaves $160.00. Funds are sufficient, but rent is the largest outflow on the board, so it goes to a human rather than straight through.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Chapel Street shop monthly rent",
+          "value": "$2,400.00"
+        },
+        {
+          "label": "Due 2026-09-02",
+          "value": "2 days out"
+        },
+        {
+          "label": "Checking balance now",
+          "value": "$2,560.00"
+        },
+        {
+          "label": "Less this payment",
+          "value": "- $2,400.00"
+        },
+        {
+          "label": "Balance after",
+          "value": "$160.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T16:29:00.074966",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 102,
+      "tools_used": [],
+      "output": "Payment is prepared and waiting on a human. The ticket stays open until it clears.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:29:10.319220",
+      "agent": "Human",
+      "action": "Approve payment",
+      "ticket_id": 102,
+      "tools_used": [],
+      "output": "Desk operator approved $2,400.00 (rent_payment, ref 1).",
+      "status": "approved"
+    },
+    {
+      "timestamp": "2026-10-14T16:29:10.319243",
+      "agent": "Accounting",
+      "action": "Record payment",
+      "ticket_id": 102,
+      "tools_used": [
+        "log_payment"
+      ],
+      "output": "Paid from checking. Balance $2,560.00 to $160.00.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T16:29:19.859070",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Yale AI Club wants 20 of CC-HOOD-NAVY size M at a discount. Inventory checks we can even fill it before Accounting prices it.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:29:19.859443",
+      "agent": "Inventory",
+      "action": "Feasibility check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors",
+        "get_open_invoices_for_vendor"
+      ],
+      "output": "Basic Hoodie Big Yale size M: 8 on hand against 20 requested, so 12 short. Bulldog Print Co covers the gap in 5 days. Their account is clear, so that lead time holds.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:29:19.859543",
+      "agent": "Accounting",
+      "action": "Margin check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Unit cost $22.00 against list $58.00 is a 62.1% margin. Holding a 20% floor puts the lowest workable price at $27.50. A 15% bulk discount at $49.30 still returns 55.4%, or $986.00 on 20 units. Approved to quote, no payment involved.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Unit cost",
+          "value": "$22.00"
+        },
+        {
+          "label": "List price",
+          "value": "$58.00"
+        },
+        {
+          "label": "Margin at list",
+          "value": "62.1%"
+        },
+        {
+          "label": "Lowest price holding a 20% floor",
+          "value": "$27.50"
+        },
+        {
+          "label": "Proposed bulk discount",
+          "value": "15% off list"
+        },
+        {
+          "label": "Discounted unit price",
+          "value": "$49.30"
+        },
+        {
+          "label": "Margin at that price",
+          "value": "55.4%"
+        },
+        {
+          "label": "Line total, 20 units",
+          "value": "$986.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T16:29:19.859570",
+      "agent": "Customer Service",
+      "action": "Draft quote",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Yale AI Club: 8 available now, remaining 12 in about 5 days, at $49.30 each for the full 20. Held internally until someone signs off.",
+      "status": "complete",
+      "draft": {
+        "to": "Yale AI Club",
+        "subject": "Quote \u2014 20 hoodies, size M",
+        "body": "Hi Yale AI Club,\n\nHappy to do a bulk rate on this. Here is where we land.\n\nWe have 8 of the Basic Hoodie Big Yale in size M on the shelf right now. The remaining 12 would come from a reprint with Bulldog Print Co, which runs about 5 days.\n\nOn price, we can do $49.30 per hoodie for the full 20, down from $58.00. That comes to $986.00 for the order.\n\nIf that works, tell me your deadline and I will confirm whether the reprint lands in time before you commit.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:29:19.859573",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 103,
+      "tools_used": [],
+      "output": "No cash moves on this one, so the ticket is resolved.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:31:13.234947",
+      "agent": "System",
+      "action": "Reset board",
+      "ticket_id": null,
+      "tools_used": [],
+      "output": "Working database restored from campus_customs.db. Starting checking balance $3,400.00. All tickets back to open.",
+      "status": "reset"
+    },
+    {
+      "timestamp": "2026-10-14T16:31:21.094713",
+      "agent": "System",
+      "action": "Reset board",
+      "ticket_id": null,
+      "tools_used": [],
+      "output": "Working database restored from campus_customs.db. Starting checking balance $3,400.00. All tickets back to open.",
+      "status": "reset"
+    },
+    {
+      "timestamp": "2026-10-14T16:31:22.383722",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Customer order from Tauhid Zaman for Bulldog tee (CC-TEE-WHITE, size S, qty 1). Stock issue suspected, so inventory goes first.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:31:22.384007",
+      "agent": "Inventory",
+      "action": "Check stock",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors"
+      ],
+      "output": "Classic Bulldog Tee size S in Aisle B: 0 on hand, 1 needed, short 1. Bulldog Print Co can reprint in 5 days, but they hold an unpaid invoice and will not ship until it clears. Handing to Accounting.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:31:22.384113",
+      "agent": "Accounting",
+      "action": "Clear vendor gate",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_open_invoices_for_vendor",
+        "get_cash_balance"
+      ],
+      "output": "Invoice 501 to Bulldog Print Co for $840.00 (Rush reprint CC-TEE-WHITE S) is 3 days overdue. Checking balance is $3,400.00, so there is room. Payment prepared, waiting on a human.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Invoice 501 \u2014 Bulldog Print Co",
+          "value": "$840.00"
+        },
+        {
+          "label": "Due 2026-08-28",
+          "value": "3 days overdue"
+        },
+        {
+          "label": "Checking balance now",
+          "value": "$3,400.00"
+        },
+        {
+          "label": "Less this payment",
+          "value": "- $840.00"
+        },
+        {
+          "label": "Balance after",
+          "value": "$2,560.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T16:31:22.384123",
+      "agent": "Customer Service",
+      "action": "Draft reply",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Tauhid Zaman: size S is out of stock today, a reprint is on the way with a 5-day lead once the vendor is cleared, and we will confirm a date before charging. Held internally for review.",
+      "status": "complete",
+      "draft": {
+        "to": "Tauhid Zaman",
+        "subject": "Your Bulldog tee (size S) \u2014 a short delay",
+        "body": "Hi Tauhid,\n\nThanks for your order for the Bulldog tee in size S. We are out of that size on the shelf today, so I do not want to give you a ship date I cannot keep.\n\nWe have a reprint lined up with Bulldog Print Co, who run about 5 days once the order is released. As soon as that is confirmed I will email you the exact date, and we will not charge the card before then.\n\nIf you need it sooner than that, tell me and I will see what else we can do.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:31:22.384134",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 101,
+      "tools_used": [],
+      "output": "Payment is prepared and waiting on a human. The ticket stays open until it clears.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:31:26.892639",
+      "agent": "Human",
+      "action": "Approve payment",
+      "ticket_id": 101,
+      "tools_used": [],
+      "output": "Desk operator approved $840.00 (vendor_payment, ref 501).",
+      "status": "approved"
+    },
+    {
+      "timestamp": "2026-10-14T16:31:26.892664",
+      "agent": "Accounting",
+      "action": "Record payment",
+      "ticket_id": 101,
+      "tools_used": [
+        "log_payment"
+      ],
+      "output": "Paid from checking. Balance $3,400.00 to $2,560.00. Invoice 501 marked paid.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T16:32:12.678010",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Rent notice from Elm City Properties. Facilities owns the shop space, so it starts there and moves to Accounting for the cash side.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:32:12.678517",
+      "agent": "Facilities",
+      "action": "Check lease",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_lease_details",
+        "get_all_leases"
+      ],
+      "output": "Chapel Street shop under Elm City Properties: $2,400.00 due 2026-09-02, 2 days out. No grace period on file. Passing the amount and the deadline to Accounting.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:32:12.678530",
+      "agent": "Accounting",
+      "action": "Prepare rent",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_cash_balance"
+      ],
+      "output": "Checking balance is $2,560.00. Rent of $2,400.00 leaves $160.00. Funds are sufficient, but rent is the largest outflow on the board, so it goes to a human rather than straight through.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Chapel Street shop monthly rent",
+          "value": "$2,400.00"
+        },
+        {
+          "label": "Due 2026-09-02",
+          "value": "2 days out"
+        },
+        {
+          "label": "Checking balance now",
+          "value": "$2,560.00"
+        },
+        {
+          "label": "Less this payment",
+          "value": "- $2,400.00"
+        },
+        {
+          "label": "Balance after",
+          "value": "$160.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T16:32:12.678771",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 102,
+      "tools_used": [],
+      "output": "Payment is prepared and waiting on a human. The ticket stays open until it clears.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:32:16.671474",
+      "agent": "Human",
+      "action": "Approve payment",
+      "ticket_id": 102,
+      "tools_used": [],
+      "output": "Desk operator approved $2,400.00 (rent_payment, ref 1).",
+      "status": "approved"
+    },
+    {
+      "timestamp": "2026-10-14T16:32:16.671578",
+      "agent": "Accounting",
+      "action": "Record payment",
+      "ticket_id": 102,
+      "tools_used": [
+        "log_payment"
+      ],
+      "output": "Paid from checking. Balance $2,560.00 to $160.00.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T16:32:37.000653",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Yale AI Club wants 20 of CC-HOOD-NAVY size M at a discount. Inventory checks we can even fill it before Accounting prices it.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:32:37.001739",
+      "agent": "Inventory",
+      "action": "Feasibility check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors",
+        "get_open_invoices_for_vendor"
+      ],
+      "output": "Basic Hoodie Big Yale size M: 8 on hand against 20 requested, so 12 short. Bulldog Print Co covers the gap in 5 days. Their account is clear, so that lead time holds.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:32:37.002012",
+      "agent": "Accounting",
+      "action": "Margin check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Unit cost $22.00 against list $58.00 is a 62.1% margin. Holding a 20% floor puts the lowest workable price at $27.50. A 15% bulk discount at $49.30 still returns 55.4%, or $986.00 on 20 units. Approved to quote, no payment involved.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Unit cost",
+          "value": "$22.00"
+        },
+        {
+          "label": "List price",
+          "value": "$58.00"
+        },
+        {
+          "label": "Margin at list",
+          "value": "62.1%"
+        },
+        {
+          "label": "Lowest price holding a 20% floor",
+          "value": "$27.50"
+        },
+        {
+          "label": "Proposed bulk discount",
+          "value": "15% off list"
+        },
+        {
+          "label": "Discounted unit price",
+          "value": "$49.30"
+        },
+        {
+          "label": "Margin at that price",
+          "value": "55.4%"
+        },
+        {
+          "label": "Line total, 20 units",
+          "value": "$986.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T16:32:37.002048",
+      "agent": "Customer Service",
+      "action": "Draft quote",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Yale AI Club: 8 available now, remaining 12 in about 5 days, at $49.30 each for the full 20. Held internally until someone signs off.",
+      "status": "complete",
+      "draft": {
+        "to": "Yale AI Club",
+        "subject": "Quote \u2014 20 hoodies, size M",
+        "body": "Hi Yale AI Club,\n\nHappy to do a bulk rate on this. Here is where we land.\n\nWe have 8 of the Basic Hoodie Big Yale in size M on the shelf right now. The remaining 12 would come from a reprint with Bulldog Print Co, which runs about 5 days.\n\nOn price, we can do $49.30 per hoodie for the full 20, down from $58.00. That comes to $986.00 for the order.\n\nIf that works, tell me your deadline and I will confirm whether the reprint lands in time before you commit.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T16:32:37.002052",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 103,
+      "tools_used": [],
+      "output": "No cash moves on this one, so the ticket is resolved.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:41:17.201534",
+      "agent": "System",
+      "action": "Reset board",
+      "ticket_id": null,
+      "tools_used": [],
+      "output": "Working database restored from campus_customs.db. Starting checking balance $3,400.00. All tickets back to open.",
+      "status": "reset"
+    },
+    {
+      "timestamp": "2026-10-14T20:41:19.682796",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Yale AI Club wants 20 of CC-HOOD-NAVY size M at a discount. Inventory checks we can even fill it before Accounting prices it.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:41:19.683504",
+      "agent": "Inventory",
+      "action": "Feasibility check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors",
+        "get_open_invoices_for_vendor"
+      ],
+      "output": "Basic Hoodie Big Yale size M: 8 on hand against 20 requested, so 12 short. Bulldog Print Co covers the gap in 5 days. They still hold 1 unpaid invoice (501, $840.00) and will not ship until it clears, so the 5-day lead only starts once that is paid. Do not promise a date yet.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:41:19.683633",
+      "agent": "Accounting",
+      "action": "Margin check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Unit cost $22.00 against list $58.00 is a 62.1% margin. Holding a 20% floor puts the lowest workable price at $27.50. A 15% bulk discount at $49.30 still returns 55.4%, or $986.00 on 20 units. Approved to quote, no payment involved.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Unit cost",
+          "value": "$22.00"
+        },
+        {
+          "label": "List price",
+          "value": "$58.00"
+        },
+        {
+          "label": "Margin at list",
+          "value": "62.1%"
+        },
+        {
+          "label": "Lowest price holding a 20% floor",
+          "value": "$27.50"
+        },
+        {
+          "label": "Proposed bulk discount",
+          "value": "15% off list"
+        },
+        {
+          "label": "Discounted unit price",
+          "value": "$49.30"
+        },
+        {
+          "label": "Margin at that price",
+          "value": "55.4%"
+        },
+        {
+          "label": "Line total, 20 units",
+          "value": "$986.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T20:41:19.683655",
+      "agent": "Customer Service",
+      "action": "Draft quote",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Yale AI Club: 8 available now, remaining 12 in about 5 days, at $49.30 each for the full 20. Held internally until someone signs off.",
+      "status": "complete",
+      "draft": {
+        "to": "Yale AI Club",
+        "subject": "Quote \u2014 20 hoodies, size M",
+        "body": "Hi Yale AI Club,\n\nHappy to do a bulk rate on this. Here is where we land.\n\nWe have 8 of the Basic Hoodie Big Yale in size M on the shelf right now. The remaining 12 would come from a reprint with Bulldog Print Co, which runs about 5 days.\n\nOn price, we can do $49.30 per hoodie for the full 20, down from $58.00. That comes to $986.00 for the order.\n\nIf that works, tell me your deadline and I will confirm whether the reprint lands in time before you commit.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:41:19.683659",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 103,
+      "tools_used": [],
+      "output": "No cash moves on this one, so the ticket is resolved.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.465771",
+      "agent": "System",
+      "action": "Reset board",
+      "ticket_id": null,
+      "tools_used": [],
+      "output": "Working database restored from campus_customs.db. Starting checking balance $3,400.00. All tickets back to open.",
+      "status": "reset"
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.511421",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Customer order from Tauhid Zaman for Bulldog tee (CC-TEE-WHITE, size S, qty 1). Stock issue suspected, so inventory goes first.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.511520",
+      "agent": "Inventory",
+      "action": "Check stock",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors"
+      ],
+      "output": "Classic Bulldog Tee size S in Aisle B: 0 on hand, 1 needed, short 1. Bulldog Print Co can reprint in 5 days, but they hold an unpaid invoice and will not ship until it clears. Handing to Accounting.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.513103",
+      "agent": "Accounting",
+      "action": "Clear vendor gate",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_open_invoices_for_vendor",
+        "get_cash_balance"
+      ],
+      "output": "Invoice 501 to Bulldog Print Co for $840.00 (Rush reprint CC-TEE-WHITE S) is 3 days overdue. Checking balance is $3,400.00, so there is room. Payment prepared, waiting on a human.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Invoice 501 \u2014 Bulldog Print Co",
+          "value": "$840.00"
+        },
+        {
+          "label": "Due 2026-08-28",
+          "value": "3 days overdue"
+        },
+        {
+          "label": "Checking balance now",
+          "value": "$3,400.00"
+        },
+        {
+          "label": "Less this payment",
+          "value": "- $840.00"
+        },
+        {
+          "label": "Balance after",
+          "value": "$2,560.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.513114",
+      "agent": "Customer Service",
+      "action": "Draft reply",
+      "ticket_id": 101,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Tauhid Zaman: size S is out of stock today, a reprint is on the way with a 5-day lead once the vendor is cleared, and we will confirm a date before charging. Held internally for review.",
+      "status": "complete",
+      "draft": {
+        "to": "Tauhid Zaman",
+        "subject": "Your Bulldog tee (size S) \u2014 a short delay",
+        "body": "Hi Tauhid,\n\nThanks for your order for the Bulldog tee in size S. We are out of that size on the shelf today, so I do not want to give you a ship date I cannot keep.\n\nWe have a reprint lined up with Bulldog Print Co, who run about 5 days once the order is released. As soon as that is confirmed I will email you the exact date, and we will not charge the card before then.\n\nIf you need it sooner than that, tell me and I will see what else we can do.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.513116",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 101,
+      "tools_used": [],
+      "output": "Payment is prepared and waiting on a human. The ticket stays open until it clears.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.571551",
+      "agent": "Human",
+      "action": "Approve payment",
+      "ticket_id": 101,
+      "tools_used": [],
+      "output": "Desk operator approved $840.00 (vendor_payment, ref 501).",
+      "status": "approved"
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.571564",
+      "agent": "Accounting",
+      "action": "Record payment",
+      "ticket_id": 101,
+      "tools_used": [
+        "log_payment"
+      ],
+      "output": "Paid from checking. Balance $3,400.00 to $2,560.00. Invoice 501 marked paid.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.592490",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Rent notice from Elm City Properties. Facilities owns the shop space, so it starts there and moves to Accounting for the cash side.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.592555",
+      "agent": "Facilities",
+      "action": "Check lease",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_lease_details",
+        "get_all_leases"
+      ],
+      "output": "Chapel Street shop under Elm City Properties: $2,400.00 due 2026-09-02, 2 days out. No grace period on file. Passing the amount and the deadline to Accounting.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.592562",
+      "agent": "Accounting",
+      "action": "Prepare rent",
+      "ticket_id": 102,
+      "tools_used": [
+        "get_cash_balance"
+      ],
+      "output": "Checking balance is $2,560.00. Rent of $2,400.00 leaves $160.00. Funds are sufficient, but rent is the largest outflow on the board, so it goes to a human rather than straight through.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Chapel Street shop monthly rent",
+          "value": "$2,400.00"
+        },
+        {
+          "label": "Due 2026-09-02",
+          "value": "2 days out"
+        },
+        {
+          "label": "Checking balance now",
+          "value": "$2,560.00"
+        },
+        {
+          "label": "Less this payment",
+          "value": "- $2,400.00"
+        },
+        {
+          "label": "Balance after",
+          "value": "$160.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.592565",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 102,
+      "tools_used": [],
+      "output": "Payment is prepared and waiting on a human. The ticket stays open until it clears.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.643653",
+      "agent": "Human",
+      "action": "Approve payment",
+      "ticket_id": 102,
+      "tools_used": [],
+      "output": "Desk operator approved $2,400.00 (rent_payment, ref 1).",
+      "status": "approved"
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.643662",
+      "agent": "Accounting",
+      "action": "Record payment",
+      "ticket_id": 102,
+      "tools_used": [
+        "log_payment"
+      ],
+      "output": "Paid from checking. Balance $2,560.00 to $160.00.",
+      "status": "complete"
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.664122",
+      "agent": "Boss",
+      "action": "Route ticket",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_tickets"
+      ],
+      "output": "Yale AI Club wants 20 of CC-HOOD-NAVY size M at a discount. Inventory checks we can even fill it before Accounting prices it.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.664227",
+      "agent": "Inventory",
+      "action": "Feasibility check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_inventory_stock",
+        "get_vendors",
+        "get_open_invoices_for_vendor"
+      ],
+      "output": "Basic Hoodie Big Yale size M: 8 on hand against 20 requested, so 12 short. Bulldog Print Co covers the gap in 5 days. Their account is clear, so that lead time holds.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.664266",
+      "agent": "Accounting",
+      "action": "Margin check",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Unit cost $22.00 against list $58.00 is a 62.1% margin. Holding a 20% floor puts the lowest workable price at $27.50. A 15% bulk discount at $49.30 still returns 55.4%, or $986.00 on 20 units. Approved to quote, no payment involved.",
+      "status": "complete",
+      "draft": null,
+      "math": [
+        {
+          "label": "Unit cost",
+          "value": "$22.00"
+        },
+        {
+          "label": "List price",
+          "value": "$58.00"
+        },
+        {
+          "label": "Margin at list",
+          "value": "62.1%"
+        },
+        {
+          "label": "Lowest price holding a 20% floor",
+          "value": "$27.50"
+        },
+        {
+          "label": "Proposed bulk discount",
+          "value": "15% off list"
+        },
+        {
+          "label": "Discounted unit price",
+          "value": "$49.30"
+        },
+        {
+          "label": "Margin at that price",
+          "value": "55.4%"
+        },
+        {
+          "label": "Line total, 20 units",
+          "value": "$986.00",
+          "total": true
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.664271",
+      "agent": "Customer Service",
+      "action": "Draft quote",
+      "ticket_id": 103,
+      "tools_used": [
+        "get_pricing"
+      ],
+      "output": "Drafted for Yale AI Club: 8 available now, remaining 12 in about 5 days, at $49.30 each for the full 20. Held internally until someone signs off.",
+      "status": "complete",
+      "draft": {
+        "to": "Yale AI Club",
+        "subject": "Quote \u2014 20 hoodies, size M",
+        "body": "Hi Yale AI Club,\n\nHappy to do a bulk rate on this. Here is where we land.\n\nWe have 8 of the Basic Hoodie Big Yale in size M on the shelf right now. The remaining 12 would come from a reprint with Bulldog Print Co, which runs about 5 days.\n\nOn price, we can do $49.30 per hoodie for the full 20, down from $58.00. That comes to $986.00 for the order.\n\nIf that works, tell me your deadline and I will confirm whether the reprint lands in time before you commit.\n\n\u2014 Campus Customs"
+      },
+      "math": null
+    },
+    {
+      "timestamp": "2026-10-14T20:43:24.664273",
+      "agent": "Boss",
+      "action": "Close out",
+      "ticket_id": 103,
+      "tools_used": [],
+      "output": "No cash moves on this one, so the ticket is resolved.",
+      "status": "complete",
+      "draft": null,
+      "math": null
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "description": "Agent action log for Campus Customs multi-agent system",
+    "database": "data/campus_customs_new.db",
+    "append_only": true,
+    "reset_at": "2026-10-14T15:55:46.466787"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "campus_customs": {
+      "command": "python",
+      "args": [
+        "-m",
+        "mcp_server.server"
+      ],
+      "disabled": false,
+      "description": "Campus Customs shop database MCP server - queries inventory, invoices, and leases"
+    }
+  }
+}

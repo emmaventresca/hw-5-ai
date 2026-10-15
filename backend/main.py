@@ -1,0 +1,581 @@
+"""
+Campus Customs Backend API
+FastAPI server providing routes for the multi-agent ticket resolution system.
+"""
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List, Optional
+import sqlite3
+import json
+import shutil
+from pathlib import Path
+from datetime import datetime
+
+app = FastAPI(title="Campus Customs Backend")
+
+# Add CORS middleware for frontend dashboard
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Database paths
+DB_WORKING = Path(__file__).parent.parent / "data" / "campus_customs_new.db"
+DB_ORIGINAL = Path(__file__).parent.parent / "data" / "campus_customs.db"
+AUDIT_TRAIL = Path(__file__).parent.parent / "output" / "audit_trail.json"
+
+
+# ============================================================================
+# DATA MODELS
+# ============================================================================
+
+class Ticket(BaseModel):
+    id: int
+    type: str
+    requester: str
+    subject: str
+    sku: Optional[str] = None
+    size: Optional[str] = None
+    qty: Optional[int] = None
+    status: str
+    created_at: str
+
+
+class AgentEvent(BaseModel):
+    timestamp: str
+    agent: str
+    action: str
+    ticket_id: Optional[int] = None
+    tools_used: List[str] = []
+    output: Optional[str] = None
+    status: str
+    draft: Optional[dict] = None          # Customer Service: the message held for review
+    math: Optional[List[dict]] = None     # Accounting: the worked calculation
+
+
+class PaymentApproval(BaseModel):
+    kind: str  # "vendor_payment" or "rent_payment"
+    ref_id: int  # invoice_id or lease_id
+    amount: float
+    approved_by: str
+    ticket_id: Optional[int] = None  # ticket to resolve once the payment clears
+
+
+class CashBalance(BaseModel):
+    account: str
+    balance: float
+    date: str
+
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+def get_db():
+    """Get database connection to working copy."""
+    conn = sqlite3.connect(str(DB_WORKING))
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def load_audit_trail():
+    """Load audit trail from JSON file."""
+    if AUDIT_TRAIL.exists():
+        with open(AUDIT_TRAIL, 'r') as f:
+            return json.load(f)
+    return {"audit_trail": [], "metadata": {}}
+
+
+def append_audit_event(event: dict):
+    """Append event to audit trail."""
+    append_audit_events([event])
+
+
+def append_audit_events(events: List[dict]):
+    """Append a batch of events to the audit trail."""
+    trail = load_audit_trail()
+    trail["audit_trail"].extend(events)
+    with open(AUDIT_TRAIL, 'w') as f:
+        json.dump(trail, f, indent=2)
+
+
+def money(value: float) -> str:
+    return f"${value:,.2f}"
+
+
+def days_until(target: str, today: str) -> int:
+    fmt = "%Y-%m-%d"
+    return (datetime.strptime(target, fmt) - datetime.strptime(today, fmt)).days
+
+
+def set_ticket_status(conn, ticket_id: int, status: str):
+    conn.execute("UPDATE tickets SET status = ? WHERE id = ?", (status, ticket_id))
+    conn.commit()
+
+
+# ============================================================================
+# ROUTES
+# ============================================================================
+
+@app.get("/tickets", response_model=List[Ticket])
+def get_tickets():
+    """
+    Return the three open tickets with their status (open or resolved).
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            SELECT id, type, requester, subject, sku, size, qty, status, created_at
+            FROM tickets
+            WHERE id IN (101, 102, 103)
+            ORDER BY id
+        """)
+        
+        tickets = []
+        for row in cursor.fetchall():
+            tickets.append(Ticket(
+                id=row["id"],
+                type=row["type"],
+                requester=row["requester"],
+                subject=row["subject"],
+                sku=row["sku"],
+                size=row["size"],
+                qty=row["qty"],
+                status=row["status"],
+                created_at=row["created_at"]
+            ))
+        
+        return tickets
+    finally:
+        conn.close()
+
+
+def orchestrate(conn, ticket, today: str):
+    """
+    Walk the agent team through one ticket using only values read from the
+    database. Returns (events, pending_approval). Routing follows the plans
+    recorded in output/harness.md.
+    """
+    tid = ticket["id"]
+    events = []
+    pending = None
+
+    def step(agent, action, tools, output, draft=None, math=None):
+        events.append({
+            "timestamp": datetime.now().isoformat(),
+            "agent": agent,
+            "action": action,
+            "ticket_id": tid,
+            "tools_used": tools,
+            "output": output,
+            "status": "complete",
+            "draft": draft,
+            "math": math,
+        })
+
+    one = lambda sql, args=(): conn.execute(sql, args).fetchone()
+    cash = one("SELECT balance FROM cash_accounts WHERE name = 'checking'")["balance"]
+
+    if ticket["type"] == "customer_order":
+        step("Boss", "Route ticket", ["get_tickets"],
+             f"Customer order from {ticket['requester']} for {ticket['subject']} "
+             f"({ticket['sku']}, size {ticket['size']}, qty {ticket['qty']}). "
+             f"Stock issue suspected, so inventory goes first.")
+
+        stock = one("SELECT qty, name, location FROM inventory WHERE sku = ? AND size = ?",
+                    (ticket["sku"], ticket["size"]))
+        on_hand = stock["qty"]
+        short = max(0, (ticket["qty"] or 0) - on_hand)
+        inv = one("SELECT * FROM invoices WHERE id = ?", (ticket["invoice_id"],)) if ticket["invoice_id"] else None
+        vendor = one("SELECT * FROM vendors WHERE id = ?", (inv["vendor_id"],)) if inv else None
+
+        step("Inventory", "Check stock", ["get_inventory_stock", "get_vendors"],
+             f"{stock['name']} size {ticket['size']} in {stock['location']}: {on_hand} on hand, "
+             f"{ticket['qty']} needed, short {short}. "
+             + (f"{vendor['name']} can reprint in {vendor['lead_days']} days, but they hold an unpaid "
+                f"invoice and will not ship until it clears. Handing to Accounting."
+                if vendor else "No reprint vendor linked to this ticket."))
+
+        if inv:
+            overdue = -days_until(inv["due_date"], today)
+            step("Accounting", "Clear vendor gate", ["get_open_invoices_for_vendor", "get_cash_balance"],
+                 f"Invoice {inv['id']} to {vendor['name']} for {money(inv['amount'])} "
+                 f"({inv['description']}) is {overdue} days overdue. Checking balance is {money(cash)}, "
+                 f"so there is room. Payment prepared, waiting on a human.",
+                 math=[
+                     {"label": f"Invoice {inv['id']} — {vendor['name']}", "value": money(inv["amount"])},
+                     {"label": f"Due {inv['due_date']}", "value": f"{overdue} days overdue"},
+                     {"label": "Checking balance now", "value": money(cash)},
+                     {"label": "Less this payment", "value": f"- {money(inv['amount'])}"},
+                     {"label": "Balance after", "value": money(cash - inv["amount"]), "total": True},
+                 ])
+            pending = {
+                "kind": "vendor_payment", "ref_id": inv["id"], "amount": inv["amount"],
+                "ticket_id": tid, "payee": vendor["name"],
+                "reason": f"Unblocks the {vendor['name']} reprint of {ticket['sku']} size {ticket['size']}.",
+                "balance_after": cash - inv["amount"],
+            }
+
+        step("Customer Service", "Draft reply", ["get_pricing"],
+             f"Drafted for {ticket['requester']}: size {ticket['size']} is out of stock today, a reprint "
+             f"is on the way with a {vendor['lead_days']}-day lead once the vendor is cleared, and we will "
+             f"confirm a date before charging. Held internally for review."
+             if vendor else f"Drafted a holding note for {ticket['requester']}.",
+             draft={
+                 "to": ticket["requester"],
+                 "subject": f"Your {ticket['subject']} (size {ticket['size']}) — a short delay",
+                 "body": (
+                     f"Hi {ticket['requester'].split()[0]},\n\n"
+                     f"Thanks for your order for the {ticket['subject']} in size {ticket['size']}. "
+                     f"We are out of that size on the shelf today, so I do not want to give you a ship "
+                     f"date I cannot keep.\n\n"
+                     f"We have a reprint lined up with {vendor['name']}, who run about "
+                     f"{vendor['lead_days']} days once the order is released. As soon as that is "
+                     f"confirmed I will email you the exact date, and we will not charge the card "
+                     f"before then.\n\n"
+                     f"If you need it sooner than that, tell me and I will see what else we can do.\n\n"
+                     f"— Campus Customs"
+                 ),
+             } if vendor else None)
+
+    elif ticket["type"] == "rent_notice":
+        step("Boss", "Route ticket", ["get_tickets"],
+             f"Rent notice from {ticket['requester']}. Facilities owns the shop space, so it starts there "
+             f"and moves to Accounting for the cash side.")
+
+        lease = one("SELECT * FROM leases WHERE id = ?", (ticket["lease_id"],))
+        left = days_until(lease["next_due"], today)
+        step("Facilities", "Check lease", ["get_lease_details", "get_all_leases"],
+             f"{lease['space_name']} under {lease['landlord']}: {money(lease['monthly_rent'])} due "
+             f"{lease['next_due']}, {left} days out. No grace period on file. Passing the amount and the "
+             f"deadline to Accounting.")
+
+        after = cash - lease["monthly_rent"]
+        step("Accounting", "Prepare rent", ["get_cash_balance"],
+             f"Checking balance is {money(cash)}. Rent of {money(lease['monthly_rent'])} leaves "
+             f"{money(after)}. Funds are sufficient, but rent is the largest outflow on the board, so it "
+             f"goes to a human rather than straight through.",
+             math=[
+                 {"label": f"{lease['space_name']} monthly rent", "value": money(lease["monthly_rent"])},
+                 {"label": f"Due {lease['next_due']}", "value": f"{left} days out"},
+                 {"label": "Checking balance now", "value": money(cash)},
+                 {"label": "Less this payment", "value": f"- {money(lease['monthly_rent'])}"},
+                 {"label": "Balance after", "value": money(after), "total": True},
+             ])
+        pending = {
+            "kind": "rent_payment", "ref_id": lease["id"], "amount": lease["monthly_rent"],
+            "ticket_id": tid, "payee": lease["landlord"],
+            "reason": f"{lease['space_name']} rent due {lease['next_due']}, {left} days out.",
+            "balance_after": after,
+        }
+
+    elif ticket["type"] == "price_override":
+        step("Boss", "Route ticket", ["get_tickets"],
+             f"{ticket['requester']} wants {ticket['qty']} of {ticket['sku']} size {ticket['size']} at a "
+             f"discount. Inventory checks we can even fill it before Accounting prices it.")
+
+        stock = one("SELECT qty, name FROM inventory WHERE sku = ? AND size = ?",
+                    (ticket["sku"], ticket["size"]))
+        gap = max(0, ticket["qty"] - stock["qty"])
+        vendor = one("SELECT * FROM vendors WHERE specialty = 'apparel reprint'")
+        blocked = conn.execute(
+            "SELECT id, amount FROM invoices WHERE vendor_id = ? AND status = 'open'", (vendor["id"],)
+        ).fetchall()
+        step("Inventory", "Feasibility check",
+             ["get_inventory_stock", "get_vendors", "get_open_invoices_for_vendor"],
+             f"{stock['name']} size {ticket['size']}: {stock['qty']} on hand against {ticket['qty']} "
+             f"requested, so {gap} short. {vendor['name']} covers the gap in {vendor['lead_days']} days. "
+             + ("Their account is clear, so that lead time holds."
+                if not blocked else
+                f"They still hold {len(blocked)} unpaid invoice "
+                f"({', '.join(str(b['id']) for b in blocked)}, "
+                f"{money(sum(b['amount'] for b in blocked))}) and will not ship until it clears, so the "
+                f"{vendor['lead_days']}-day lead only starts once that is paid. Do not promise a date yet."))
+
+        price = one("SELECT * FROM pricing WHERE sku = ?", (ticket["sku"],))
+        cost, lst = price["unit_cost"], price["list_price"]
+        floor = round(cost / 0.80, 2)                      # 20% margin floor
+        offer = round(lst * 0.85, 2)                       # 15% bulk discount
+        margin = (offer - cost) / offer * 100
+        step("Accounting", "Margin check", ["get_pricing"],
+             f"Unit cost {money(cost)} against list {money(lst)} is a {(lst - cost) / lst * 100:.1f}% margin. "
+             f"Holding a 20% floor puts the lowest workable price at {money(floor)}. A 15% bulk discount at "
+             f"{money(offer)} still returns {margin:.1f}%, or {money(offer * ticket['qty'])} on "
+             f"{ticket['qty']} units. Approved to quote, no payment involved.",
+             math=[
+                 {"label": "Unit cost", "value": money(cost)},
+                 {"label": "List price", "value": money(lst)},
+                 {"label": "Margin at list", "value": f"{(lst - cost) / lst * 100:.1f}%"},
+                 {"label": "Lowest price holding a 20% floor", "value": money(floor)},
+                 {"label": "Proposed bulk discount", "value": "15% off list"},
+                 {"label": "Discounted unit price", "value": money(offer)},
+                 {"label": "Margin at that price", "value": f"{margin:.1f}%"},
+                 {"label": f"Line total, {ticket['qty']} units", "value": money(offer * ticket["qty"]), "total": True},
+             ])
+
+        step("Customer Service", "Draft quote", ["get_pricing"],
+             f"Drafted for {ticket['requester']}: {stock['qty']} available now, remaining {gap} in about "
+             f"{vendor['lead_days']} days, at {money(offer)} each for the full {ticket['qty']}. "
+             f"Held internally until someone signs off.",
+             draft={
+                 "to": ticket["requester"],
+                 "subject": f"Quote — {ticket['qty']} hoodies, size {ticket['size']}",
+                 "body": (
+                     f"Hi {ticket['requester']},\n\n"
+                     f"Happy to do a bulk rate on this. Here is where we land.\n\n"
+                     f"We have {stock['qty']} of the {stock['name']} in size {ticket['size']} on the "
+                     f"shelf right now. The remaining {gap} would come from a reprint with "
+                     f"{vendor['name']}, which runs about {vendor['lead_days']} days.\n\n"
+                     f"On price, we can do {money(offer)} per hoodie for the full {ticket['qty']}, down "
+                     f"from {money(lst)}. That comes to {money(offer * ticket['qty'])} for the order.\n\n"
+                     f"If that works, tell me your deadline and I will confirm whether the reprint lands "
+                     f"in time before you commit.\n\n"
+                     f"— Campus Customs"
+                 ),
+             })
+
+    step("Boss", "Close out", [],
+         "Payment is prepared and waiting on a human. The ticket stays open until it clears."
+         if pending else "No cash moves on this one, so the ticket is resolved.")
+
+    return events, pending
+
+
+@app.post("/run-ticket/{ticket_id}")
+def run_ticket(ticket_id: int):
+    """
+    Run the agent team on a specific ticket.
+    Every value in the returned events is read from campus_customs_new.db.
+    Tickets that need no payment are resolved here; the rest wait on /approve-payment.
+    """
+    conn = get_db()
+    try:
+        ticket = conn.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,)).fetchone()
+        if ticket is None:
+            raise HTTPException(status_code=404, detail=f"Ticket {ticket_id} not found")
+
+        today = conn.execute("SELECT date_today FROM desk").fetchone()["date_today"]
+        events, pending = orchestrate(conn, ticket, today)
+        append_audit_events(events)
+
+        if pending is None:
+            set_ticket_status(conn, ticket_id, "resolved")
+
+        return {
+            "ticket_id": ticket_id,
+            "status": "awaiting_approval" if pending else "resolved",
+            "events": events,
+            "pending_approval": pending,
+        }
+    finally:
+        conn.close()
+
+
+@app.get("/agent-events", response_model=List[AgentEvent])
+def get_agent_events():
+    """
+    Return all agent events from the audit trail.
+    Each event shows what an agent said, which tools it used, and the result.
+    Used by the dashboard to display agent activity and refresh the board.
+    """
+    trail = load_audit_trail()
+    
+    events = []
+    for event_data in trail.get("audit_trail", []):
+        events.append(AgentEvent(
+            timestamp=event_data.get("timestamp", ""),
+            agent=event_data.get("agent", "system"),
+            action=event_data.get("action", ""),
+            ticket_id=event_data.get("ticket_id"),
+            tools_used=event_data.get("tools_used", []),
+            output=event_data.get("output"),
+            status=event_data.get("status", "unknown")
+        ))
+    
+    return events
+
+
+@app.post("/approve-payment")
+def approve_payment(payment: PaymentApproval):
+    """
+    Process a human-approved payment.
+    This route actually changes the cash balance (logs the payment to the database).
+    Agents can only PREPARE payments; this route is what makes them real.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT balance FROM cash_accounts WHERE name = 'checking'")
+        result = cursor.fetchone()
+        current_balance = result["balance"] if result else 0
+
+        # Shop rule: refuse rather than ever go negative.
+        if current_balance < payment.amount:
+            append_audit_event({
+                "timestamp": datetime.now().isoformat(),
+                "agent": "Accounting",
+                "action": "Refuse payment",
+                "ticket_id": payment.ticket_id,
+                "tools_used": ["get_cash_balance"],
+                "output": f"Refused {money(payment.amount)}: checking holds only {money(current_balance)}.",
+                "status": "refused",
+            })
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient funds. Balance: {money(current_balance)}, required: {money(payment.amount)}"
+            )
+
+        cursor.execute("""
+            INSERT INTO payments (kind, ref_id, amount, account, paid_at, approved_by)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (payment.kind, payment.ref_id, payment.amount, "checking",
+              datetime.now().isoformat(), payment.approved_by))
+        payment_id = cursor.lastrowid
+
+        new_balance = current_balance - payment.amount
+        cursor.execute("UPDATE cash_accounts SET balance = ? WHERE name = 'checking'", (new_balance,))
+
+        # Shop rule: once a payment is made, update the table it came from.
+        if payment.kind == "vendor_payment":
+            cursor.execute("UPDATE invoices SET status = 'paid' WHERE id = ?", (payment.ref_id,))
+
+        if payment.ticket_id is not None:
+            cursor.execute("UPDATE tickets SET status = 'resolved' WHERE id = ?", (payment.ticket_id,))
+
+        conn.commit()
+
+        append_audit_events([
+            {
+                "timestamp": datetime.now().isoformat(),
+                "agent": "Human",
+                "action": "Approve payment",
+                "ticket_id": payment.ticket_id,
+                "tools_used": [],
+                "output": f"{payment.approved_by} approved {money(payment.amount)} ({payment.kind}, ref {payment.ref_id}).",
+                "status": "approved",
+            },
+            {
+                "timestamp": datetime.now().isoformat(),
+                "agent": "Accounting",
+                "action": "Record payment",
+                "ticket_id": payment.ticket_id,
+                "tools_used": ["log_payment"],
+                "output": f"Paid from checking. Balance {money(current_balance)} to {money(new_balance)}."
+                          + (f" Invoice {payment.ref_id} marked paid." if payment.kind == "vendor_payment" else ""),
+                "status": "complete",
+            },
+        ])
+
+        return {
+            "status": "approved",
+            "payment_id": payment_id,
+            "previous_balance": current_balance,
+            "amount": payment.amount,
+            "new_balance": new_balance,
+            "approved_by": payment.approved_by,
+            "ticket_id": payment.ticket_id,
+        }
+
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
+@app.get("/cash-balance", response_model=CashBalance)
+def get_cash_balance():
+    """
+    Return the current cash balance from cash_accounts table.
+    Used by the dashboard and agents to check available funds.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("SELECT name, balance, date FROM cash_accounts WHERE name = 'checking'")
+        row = cursor.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="Cash account not found")
+        
+        return CashBalance(
+            account=row["name"],
+            balance=row["balance"],
+            date=row["date"]
+        )
+    finally:
+        conn.close()
+
+
+@app.post("/reset-db")
+def reset_database():
+    """
+    Reset the working database to original values.
+    Copies campus_customs.db to campus_customs_new.db.
+    Use this before starting a fresh run of all three tickets.
+    """
+    try:
+        # Copy original to working
+        shutil.copy(str(DB_ORIGINAL), str(DB_WORKING))
+
+        # The audit trail is append-only: a reset is recorded as an event in the
+        # log rather than erasing the history that came before it.
+        conn = get_db()
+        try:
+            balance = conn.execute(
+                "SELECT balance FROM cash_accounts WHERE name = 'checking'").fetchone()["balance"]
+        finally:
+            conn.close()
+
+        append_audit_event({
+            "timestamp": datetime.now().isoformat(),
+            "agent": "System",
+            "action": "Reset board",
+            "ticket_id": None,
+            "tools_used": [],
+            "output": f"Working database restored from campus_customs.db. "
+                      f"Starting checking balance {money(balance)}. All tickets back to open.",
+            "status": "reset",
+        })
+
+        return {
+            "status": "reset",
+            "message": "Database reset to original values",
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Reset failed: {str(e)}")
+
+
+# ============================================================================
+# HEALTH CHECK
+# ============================================================================
+
+@app.get("/health")
+def health_check():
+    """
+    Health check endpoint. Returns 200 if backend is running.
+    """
+    return {
+        "status": "healthy",
+        "service": "Campus Customs Backend",
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -22,7 +22,7 @@ def get_inventory_stock(sku: str, size: str) -> dict:
     cursor = conn.cursor()
     
     cursor.execute(
-        "SELECT qty, location FROM inventory WHERE sku = ? AND size = ?",
+        "SELECT name, qty, location FROM inventory WHERE sku = ? AND size = ?",
         (sku, size)
     )
     row = cursor.fetchone()
@@ -31,6 +31,7 @@ def get_inventory_stock(sku: str, size: str) -> dict:
     if row:
         return {
             "sku": sku,
+            "name": row["name"],
             "size": size,
             "qty": row["qty"],
             "location": row["location"],
@@ -39,6 +40,7 @@ def get_inventory_stock(sku: str, size: str) -> dict:
     else:
         return {
             "sku": sku,
+            "name": None,
             "size": size,
             "qty": 0,
             "location": None,
@@ -243,7 +245,11 @@ def get_pricing(sku: str) -> dict:
             "unit_cost": row["unit_cost"],
             "list_price": row["list_price"],
             "margin": row["list_price"] - row["unit_cost"],
-            "margin_percent": ((row["list_price"] - row["unit_cost"]) / row["unit_cost"] * 100) if row["unit_cost"] > 0 else 0,
+            # Margin is measured against the selling price. Dividing by cost
+            # gives markup, which is a much larger number and will mis-price
+            # a discount if an agent treats it as margin.
+            "margin_percent": ((row["list_price"] - row["unit_cost"]) / row["list_price"] * 100) if row["list_price"] > 0 else 0,
+            "markup_percent": ((row["list_price"] - row["unit_cost"]) / row["unit_cost"] * 100) if row["unit_cost"] > 0 else 0,
             "found": True
         }
     else:

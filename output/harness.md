@@ -90,9 +90,20 @@
 - **Tickets Unlocked:** 101, 102
 - **Purpose:** Writes the payment row after a human approves. Agents never call this on their own initiative — it runs behind `POST /approve-payment`, which is the only path that touches `cash_accounts`.
 
-### Transport
+### Transport and how the backend uses it
 
-`mcp_server/server.py` speaks the MCP stdio transport (JSON-RPC 2.0, protocol `2024-11-05`) and is registered in `.mcp.json` as `campus_customs`. It implements `initialize`, `tools/list`, `tools/call` and `ping` directly against the wire protocol, so it runs with no third-party dependencies. All nine tools read `data/campus_customs_new.db`.
+`mcp_server/server.py` speaks the MCP stdio transport (JSON-RPC 2.0, protocol `2024-11-05`) and is registered in `.mcp.json` as `campus_customs`. It implements `initialize`, `tools/list`, `tools/call` and `ping` directly against the wire protocol, so it runs with no third-party dependencies.
+
+**The FastAPI backend is a real MCP client.** `backend/mcp_client.py` spawns the server as a subprocess and performs an `initialize` handshake, and every fact an agent states is fetched with an actual `tools/call` round trip — the backend never reads those tables with its own SQL. A `ToolRecorder` collects the calls made during each agent step, so the `tools_used` list written to the audit trail is a record of calls that happened rather than a label someone typed.
+
+This is verifiable rather than asserted. Break `mcp_server/server.py` and `POST /run-ticket/{id}` returns **503** with a message naming the command to start the server; it cannot produce agent output without it. `GET /health` and `GET /tickets` keep working, which is correct — those are plain board reads, not agent findings.
+
+`POST /approve-payment` writes its payment row through the `log_payment` tool over the same transport, so all nine tools are exercised by a full three-ticket run. If the balance update that follows fails, the payment row is removed so `payments` can never disagree with `cash_accounts`.
+
+### Two bugs this surfaced
+
+- **`get_pricing` reported markup as margin.** It divided by unit cost instead of list price, so a $22.00/$58.00 item came back as `163.6%`. True margin is `62.1%`. An agent treating that as margin would approve a far deeper discount than the shop can afford. Fixed, with `markup_percent` now returned separately.
+- **The bulk discount ignored the margin floor.** Accounting stated a 20% floor and then applied a flat 15% discount regardless. At a $40.00 unit cost the floor is $50.00 and the discount landed at $49.30 — below the rule it had just quoted. The discount is now clamped to the floor, and when cost rises far enough that even list price cannot clear 20%, Accounting quotes nothing and Customer Service withholds the draft entirely.
 
 ---
 

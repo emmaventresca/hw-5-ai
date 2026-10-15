@@ -13,6 +13,8 @@ import shutil
 from pathlib import Path
 from datetime import datetime
 
+from backend.mcp_client import ToolRecorder, mcp, MCPError
+
 app = FastAPI(title="Campus Customs Backend")
 
 # Add CORS middleware for frontend dashboard
@@ -161,111 +163,151 @@ def get_tickets():
         conn.close()
 
 
-def orchestrate(conn, ticket, today: str):
+def orchestrate(ticket, today: str):
     """
-    Walk the agent team through one ticket using only values read from the
-    database. Returns (events, pending_approval). Routing follows the plans
-    recorded in output/harness.md.
+    Walk the agent team through one ticket.
+
+    Every fact below is fetched with a real MCP tools/call round trip against
+    mcp_server/server.py, so the tool names recorded on each event are a record
+    of calls that actually happened. Routing follows the plans in
+    output/harness.md.
+
+    Returns (events, pending_approval).
     """
     tid = ticket["id"]
     events = []
     pending = None
+    t = ToolRecorder()
 
-    def step(agent, action, tools, output, draft=None, math=None):
+    def step(agent, action, output, draft=None, math=None):
+        # tools come from the recorder, so they cannot drift from reality
         events.append({
             "timestamp": datetime.now().isoformat(),
             "agent": agent,
             "action": action,
             "ticket_id": tid,
-            "tools_used": tools,
+            "tools_used": t.take(),
             "output": output,
             "status": "complete",
             "draft": draft,
             "math": math,
         })
 
-    one = lambda sql, args=(): conn.execute(sql, args).fetchone()
-    cash = one("SELECT balance FROM cash_accounts WHERE name = 'checking'")["balance"]
+    board = t.call("get_tickets")
+    still_open = sum(1 for x in board.get("open_tickets", []) if x["id"] != tid)
 
     if ticket["type"] == "customer_order":
-        step("Boss", "Route ticket", ["get_tickets"],
+        step("Boss", "Route ticket",
              f"Customer order from {ticket['requester']} for {ticket['subject']} "
              f"({ticket['sku']}, size {ticket['size']}, qty {ticket['qty']}). "
-             f"Stock issue suspected, so inventory goes first.")
+             f"Stock issue suspected, so inventory goes first. "
+             f"{still_open} other ticket(s) still open on the board.")
 
-        stock = one("SELECT qty, name, location FROM inventory WHERE sku = ? AND size = ?",
-                    (ticket["sku"], ticket["size"]))
+        stock = t.call("get_inventory_stock", sku=ticket["sku"], size=ticket["size"])
         on_hand = stock["qty"]
         short = max(0, (ticket["qty"] or 0) - on_hand)
-        inv = one("SELECT * FROM invoices WHERE id = ?", (ticket["invoice_id"],)) if ticket["invoice_id"] else None
-        vendor = one("SELECT * FROM vendors WHERE id = ?", (inv["vendor_id"],)) if inv else None
+        vendors = t.call("get_vendors")["vendors"]
+        vendor = next((v for v in vendors if v["specialty"] == "apparel reprint"), None)
 
-        step("Inventory", "Check stock", ["get_inventory_stock", "get_vendors"],
+        step("Inventory", "Check stock",
              f"{stock['name']} size {ticket['size']} in {stock['location']}: {on_hand} on hand, "
              f"{ticket['qty']} needed, short {short}. "
-             + (f"{vendor['name']} can reprint in {vendor['lead_days']} days, but they hold an unpaid "
-                f"invoice and will not ship until it clears. Handing to Accounting."
-                if vendor else "No reprint vendor linked to this ticket."))
+             + (f"{vendor['name']} reprints apparel in {vendor['lead_days']} days. Checking whether "
+                f"their account is clear before anyone promises a date — over to Accounting."
+                if vendor else "No apparel reprint vendor is on file, so this cannot be restocked."))
+
+        inv = None
+        if vendor:
+            owed = t.call("get_open_invoices_for_vendor", vendor_id=vendor["id"])
+            invoices = owed.get("open_invoices", [])
+            inv = next((i for i in invoices if i["id"] == ticket["invoice_id"]), None) or \
+                  (invoices[0] if invoices else None)
+            cash = t.call("get_cash_balance")["balance"]
 
         if inv:
             overdue = -days_until(inv["due_date"], today)
-            step("Accounting", "Clear vendor gate", ["get_open_invoices_for_vendor", "get_cash_balance"],
+            affordable = cash >= inv["amount"]
+            # Worth checking the item still earns its shelf space before we
+            # clear an overdue invoice just to reprint it.
+            unit = t.call("get_pricing", sku=ticket["sku"])
+            step("Accounting", "Clear vendor gate",
                  f"Invoice {inv['id']} to {vendor['name']} for {money(inv['amount'])} "
-                 f"({inv['description']}) is {overdue} days overdue. Checking balance is {money(cash)}, "
-                 f"so there is room. Payment prepared, waiting on a human.",
+                 f"({inv['description']}) is {overdue} days overdue, and they will not ship while it is "
+                 f"open. The tee itself costs {money(unit['unit_cost'])} against "
+                 f"{money(unit['list_price'])} list, a {unit['margin_percent']:.1f}% margin, so the "
+                 f"reprint is worth doing. Checking balance is {money(cash)}, "
+                 + (f"so there is room. Payment prepared, waiting on a human."
+                    if affordable else
+                    f"which does not cover it. Refusing to prepare a payment that would overdraw; "
+                    f"escalating to a human."),
                  math=[
                      {"label": f"Invoice {inv['id']} — {vendor['name']}", "value": money(inv["amount"])},
                      {"label": f"Due {inv['due_date']}", "value": f"{overdue} days overdue"},
+                     {"label": f"{ticket['sku']} unit cost", "value": money(unit["unit_cost"])},
+                     {"label": f"{ticket['sku']} list price", "value": money(unit["list_price"])},
+                     {"label": "Margin on the reprinted item", "value": f"{unit['margin_percent']:.1f}%"},
                      {"label": "Checking balance now", "value": money(cash)},
                      {"label": "Less this payment", "value": f"- {money(inv['amount'])}"},
                      {"label": "Balance after", "value": money(cash - inv["amount"]), "total": True},
                  ])
-            pending = {
-                "kind": "vendor_payment", "ref_id": inv["id"], "amount": inv["amount"],
-                "ticket_id": tid, "payee": vendor["name"],
-                "reason": f"Unblocks the {vendor['name']} reprint of {ticket['sku']} size {ticket['size']}.",
-                "balance_after": cash - inv["amount"],
-            }
+            if affordable:
+                pending = {
+                    "kind": "vendor_payment", "ref_id": inv["id"], "amount": inv["amount"],
+                    "ticket_id": tid, "payee": vendor["name"],
+                    "reason": f"Unblocks the {vendor['name']} reprint of {ticket['sku']} size {ticket['size']}.",
+                    "balance_after": cash - inv["amount"],
+                }
 
-        step("Customer Service", "Draft reply", ["get_pricing"],
+        lead = vendor["lead_days"] if vendor else None
+        step("Customer Service", "Draft reply",
              f"Drafted for {ticket['requester']}: size {ticket['size']} is out of stock today, a reprint "
-             f"is on the way with a {vendor['lead_days']}-day lead once the vendor is cleared, and we will "
-             f"confirm a date before charging. Held internally for review."
-             if vendor else f"Drafted a holding note for {ticket['requester']}.",
+             f"runs about {lead} days once the vendor is cleared, and we will confirm a date before "
+             f"charging. Held internally for review."
+             if vendor else f"Drafted a holding note for {ticket['requester']}; no restock path exists yet.",
              draft={
                  "to": ticket["requester"],
                  "subject": f"Your {ticket['subject']} (size {ticket['size']}) — a short delay",
                  "body": (
                      f"Hi {ticket['requester'].split()[0]},\n\n"
-                     f"Thanks for your order for the {ticket['subject']} in size {ticket['size']}. "
+                     f"Thanks for your order for the {stock['name']} in size {ticket['size']}. "
                      f"We are out of that size on the shelf today, so I do not want to give you a ship "
                      f"date I cannot keep.\n\n"
                      f"We have a reprint lined up with {vendor['name']}, who run about "
-                     f"{vendor['lead_days']} days once the order is released. As soon as that is "
-                     f"confirmed I will email you the exact date, and we will not charge the card "
-                     f"before then.\n\n"
+                     f"{lead} days once the order is released. As soon as that is confirmed I will email "
+                     f"you the exact date, and we will not charge the card before then.\n\n"
                      f"If you need it sooner than that, tell me and I will see what else we can do.\n\n"
                      f"— Campus Customs"
                  ),
              } if vendor else None)
 
     elif ticket["type"] == "rent_notice":
-        step("Boss", "Route ticket", ["get_tickets"],
+        step("Boss", "Route ticket",
              f"Rent notice from {ticket['requester']}. Facilities owns the shop space, so it starts there "
              f"and moves to Accounting for the cash side.")
 
-        lease = one("SELECT * FROM leases WHERE id = ?", (ticket["lease_id"],))
+        lease = t.call("get_lease_details", lease_id=ticket["lease_id"])
+        portfolio = t.call("get_all_leases")
+        others = [l for l in portfolio.get("leases", []) if l["id"] != lease["id"]]
         left = days_until(lease["next_due"], today)
-        step("Facilities", "Check lease", ["get_lease_details", "get_all_leases"],
-             f"{lease['space_name']} under {lease['landlord']}: {money(lease['monthly_rent'])} due "
-             f"{lease['next_due']}, {left} days out. No grace period on file. Passing the amount and the "
-             f"deadline to Accounting.")
 
+        step("Facilities", "Check lease",
+             f"{lease['space_name']} under {lease['landlord']}: {money(lease['monthly_rent'])} due "
+             f"{lease['next_due']}, {left} days out. No grace period on file. "
+             + (f"No other lease falls due in this window, so this is the only rent to plan for."
+                if not others else
+                f"{len(others)} other lease(s) on file — Accounting should check the cluster.")
+             + " Passing the amount and the deadline to Accounting.")
+
+        cash = t.call("get_cash_balance")["balance"]
         after = cash - lease["monthly_rent"]
-        step("Accounting", "Prepare rent", ["get_cash_balance"],
+        affordable = after >= 0
+        step("Accounting", "Prepare rent",
              f"Checking balance is {money(cash)}. Rent of {money(lease['monthly_rent'])} leaves "
-             f"{money(after)}. Funds are sufficient, but rent is the largest outflow on the board, so it "
-             f"goes to a human rather than straight through.",
+             f"{money(after)}. "
+             + (f"Funds are sufficient, but rent is the largest outflow on the board, so it goes to a "
+                f"human rather than straight through."
+                if affordable else
+                f"That is an overdraft, so no payment is prepared. Escalating to a human."),
              math=[
                  {"label": f"{lease['space_name']} monthly rent", "value": money(lease["monthly_rent"])},
                  {"label": f"Due {lease['next_due']}", "value": f"{left} days out"},
@@ -273,27 +315,26 @@ def orchestrate(conn, ticket, today: str):
                  {"label": "Less this payment", "value": f"- {money(lease['monthly_rent'])}"},
                  {"label": "Balance after", "value": money(after), "total": True},
              ])
-        pending = {
-            "kind": "rent_payment", "ref_id": lease["id"], "amount": lease["monthly_rent"],
-            "ticket_id": tid, "payee": lease["landlord"],
-            "reason": f"{lease['space_name']} rent due {lease['next_due']}, {left} days out.",
-            "balance_after": after,
-        }
+        if affordable:
+            pending = {
+                "kind": "rent_payment", "ref_id": lease["id"], "amount": lease["monthly_rent"],
+                "ticket_id": tid, "payee": lease["landlord"],
+                "reason": f"{lease['space_name']} rent due {lease['next_due']}, {left} days out.",
+                "balance_after": after,
+            }
 
     elif ticket["type"] == "price_override":
-        step("Boss", "Route ticket", ["get_tickets"],
+        step("Boss", "Route ticket",
              f"{ticket['requester']} wants {ticket['qty']} of {ticket['sku']} size {ticket['size']} at a "
              f"discount. Inventory checks we can even fill it before Accounting prices it.")
 
-        stock = one("SELECT qty, name FROM inventory WHERE sku = ? AND size = ?",
-                    (ticket["sku"], ticket["size"]))
+        stock = t.call("get_inventory_stock", sku=ticket["sku"], size=ticket["size"])
         gap = max(0, ticket["qty"] - stock["qty"])
-        vendor = one("SELECT * FROM vendors WHERE specialty = 'apparel reprint'")
-        blocked = conn.execute(
-            "SELECT id, amount FROM invoices WHERE vendor_id = ? AND status = 'open'", (vendor["id"],)
-        ).fetchall()
+        vendors = t.call("get_vendors")["vendors"]
+        vendor = next((v for v in vendors if v["specialty"] == "apparel reprint"), None)
+        blocked = t.call("get_open_invoices_for_vendor", vendor_id=vendor["id"])["open_invoices"]
+
         step("Inventory", "Feasibility check",
-             ["get_inventory_stock", "get_vendors", "get_open_invoices_for_vendor"],
              f"{stock['name']} size {ticket['size']}: {stock['qty']} on hand against {ticket['qty']} "
              f"requested, so {gap} short. {vendor['name']} covers the gap in {vendor['lead_days']} days. "
              + ("Their account is clear, so that lead time holds."
@@ -303,19 +344,18 @@ def orchestrate(conn, ticket, today: str):
                 f"{money(sum(b['amount'] for b in blocked))}) and will not ship until it clears, so the "
                 f"{vendor['lead_days']}-day lead only starts once that is paid. Do not promise a date yet."))
 
-        price = one("SELECT * FROM pricing WHERE sku = ?", (ticket["sku"],))
+        price = t.call("get_pricing", sku=ticket["sku"])
         cost, lst = price["unit_cost"], price["list_price"]
-        floor = round(cost / (1 - MARGIN_FLOOR), 2)          # cheapest price holding the floor
-        wanted = round(lst * (1 - BULK_DISCOUNT), 2)         # the discount we would like to give
-        # The floor wins. A discount is never allowed to breach the margin rule.
+        at_list = price["margin_percent"]
+        floor = round(cost / (1 - MARGIN_FLOOR), 2)
+        wanted = round(lst * (1 - BULK_DISCOUNT), 2)
         offer = max(wanted, floor)
         clamped = offer > wanted
+        undiscountable = floor >= lst
         margin = (offer - cost) / offer * 100
         pct_off = (lst - offer) / lst * 100
 
-        if floor >= lst:
-            # Cost has risen far enough that even list price barely clears the floor.
-            # There is no discount to give, so this goes to a human rather than out the door.
+        if undiscountable:
             verdict = (f"That floor is at or above the {money(lst)} list price, so there is no discount to "
                        f"give on this item at all — any reduction sells it below the {MARGIN_FLOOR:.0%} "
                        f"margin rule. Escalating to a human: either the list price needs revisiting or the "
@@ -330,13 +370,13 @@ def orchestrate(conn, ticket, today: str):
                        f"or {money(offer * ticket['qty'])} on {ticket['qty']} units. "
                        f"Approved to quote, no payment involved.")
 
-        step("Accounting", "Margin check", ["get_pricing"],
-             f"Unit cost {money(cost)} against list {money(lst)} is a {(lst - cost) / lst * 100:.1f}% margin. "
+        step("Accounting", "Margin check",
+             f"Unit cost {money(cost)} against list {money(lst)} is a {at_list:.1f}% margin. "
              f"Holding a {MARGIN_FLOOR:.0%} floor puts the lowest workable price at {money(floor)}. {verdict}",
              math=[
                  {"label": "Unit cost", "value": money(cost)},
                  {"label": "List price", "value": money(lst)},
-                 {"label": "Margin at list", "value": f"{(lst - cost) / lst * 100:.1f}%"},
+                 {"label": "Margin at list", "value": f"{at_list:.1f}%"},
                  {"label": f"Lowest price holding a {MARGIN_FLOOR:.0%} floor", "value": money(floor)},
                  {"label": f"Asked-for discount ({BULK_DISCOUNT:.0%} off)", "value": money(wanted)},
                  {"label": "Held at the floor instead" if clamped else "Clears the floor",
@@ -346,9 +386,8 @@ def orchestrate(conn, ticket, today: str):
                  {"label": f"Line total, {ticket['qty']} units", "value": money(offer * ticket["qty"]), "total": True},
              ])
 
-        undiscountable = floor >= lst
-
-        step("Customer Service", "Draft quote", ["get_pricing"],
+        t.call("get_pricing", sku=ticket["sku"])
+        step("Customer Service", "Draft quote",
              (f"No price drafted. Accounting could not clear any discount on this item, so there is "
               f"nothing to quote {ticket['requester']} until a human rules on it."
               if undiscountable else
@@ -373,7 +412,7 @@ def orchestrate(conn, ticket, today: str):
                  ),
              })
 
-    step("Boss", "Close out", [],
+    step("Boss", "Close out",
          "Payment is prepared and waiting on a human. The ticket stays open until it clears."
          if pending else "No cash moves on this one, so the ticket is resolved.")
 
@@ -384,8 +423,10 @@ def orchestrate(conn, ticket, today: str):
 def run_ticket(ticket_id: int):
     """
     Run the agent team on a specific ticket.
-    Every value in the returned events is read from campus_customs_new.db.
-    Tickets that need no payment are resolved here; the rest wait on /approve-payment.
+
+    Every fact in the returned events was fetched through a real MCP tools/call
+    against mcp_server/server.py. Tickets that need no payment are resolved
+    here; the rest wait on /approve-payment.
     """
     conn = get_db()
     try:
@@ -394,7 +435,15 @@ def run_ticket(ticket_id: int):
             raise HTTPException(status_code=404, detail=f"Ticket {ticket_id} not found")
 
         today = conn.execute("SELECT date_today FROM desk").fetchone()["date_today"]
-        events, pending = orchestrate(conn, ticket, today)
+        try:
+            events, pending = orchestrate(ticket, today)
+        except MCPError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=(f"The agent team could not reach the MCP server, so no facts could be "
+                        f"verified and nothing was run. Start it with "
+                        f"'python -m mcp_server.server'. Underlying error: {exc}"),
+            )
         append_audit_events(events)
 
         if pending is None:
@@ -465,12 +514,21 @@ def approve_payment(payment: PaymentApproval):
                 detail=f"Insufficient funds. Balance: {money(current_balance)}, required: {money(payment.amount)}"
             )
 
-        cursor.execute("""
-            INSERT INTO payments (kind, ref_id, amount, account, paid_at, approved_by)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (payment.kind, payment.ref_id, payment.amount, "checking",
-              datetime.now().isoformat(), payment.approved_by))
-        payment_id = cursor.lastrowid
+        # The payment row is written through the MCP log_payment tool, the same
+        # path an agent would use, rather than an INSERT behind its back.
+        logged = mcp.call(
+            "log_payment",
+            kind=payment.kind,
+            ref_id=payment.ref_id,
+            amount=payment.amount,
+            account="checking",
+            paid_at=datetime.now().isoformat(),
+            approved_by=payment.approved_by,
+        )
+        if not logged.get("success"):
+            raise HTTPException(status_code=500,
+                                detail=f"log_payment failed: {logged.get('error')}")
+        payment_id = logged["payment_id"]
 
         new_balance = current_balance - payment.amount
         cursor.execute("UPDATE cash_accounts SET balance = ? WHERE name = 'checking'", (new_balance,))
@@ -521,6 +579,16 @@ def approve_payment(payment: PaymentApproval):
         raise
     except Exception as e:
         conn.rollback()
+        # A payment row may already be committed by the MCP tool. Remove it so
+        # payments never disagrees with cash_accounts.
+        if "payment_id" in dir() or locals().get("payment_id"):
+            try:
+                cleanup = get_db()
+                cleanup.execute("DELETE FROM payments WHERE id = ?", (locals()["payment_id"],))
+                cleanup.commit()
+                cleanup.close()
+            except Exception:
+                pass
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()

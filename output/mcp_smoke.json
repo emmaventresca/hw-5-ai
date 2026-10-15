@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-14T20:53:21.244852",
+  "generated_at": "2026-10-14T21:08:03.533027",
   "transport": {
     "type": "stdio",
     "protocol": "JSON-RPC 2.0",
@@ -21,7 +21,7 @@
     ]
   },
   "database": "data/campus_customs_new.db",
-  "method": "Each tool was called over the live MCP stdio transport, and each result was cross-checked against a direct SQL read of the same database.",
+  "method": "Each tool was called over the live MCP stdio transport and each result cross-checked against a direct SQL read of the same database. The FastAPI backend uses this same transport at runtime: backend/mcp_client.py spawns the server and every agent fact comes from a tools/call round trip.",
   "mcp_smoke_tests": [
     {
       "test_number": 1,
@@ -33,6 +33,7 @@
       },
       "tool_output": {
         "sku": "CC-TEE-WHITE",
+        "name": "Classic Bulldog Tee",
         "size": "S",
         "qty": 0,
         "location": "Aisle B",
@@ -43,11 +44,11 @@
         "value": 0
       },
       "database_verified": true,
-      "notes": "Returns 0, which is the shortfall that starts ticket 101."
+      "notes": "Returns 0, the shortfall that starts ticket 101. Inventory calls this first."
     },
     {
       "test_number": 2,
-      "prompt": "What open invoices does vendor 1 (Bulldog Print Co) have? (Gates ticket 101)",
+      "prompt": "What open invoices does Bulldog Print Co have? (Gates tickets 101 and 103)",
       "tool_name": "get_open_invoices_for_vendor",
       "tool_input": {
         "vendor_id": 1
@@ -71,7 +72,7 @@
         "value": 1
       },
       "database_verified": true,
-      "notes": "Invoice 501 for $840.00 is overdue and blocks the reprint."
+      "notes": "Invoice 501 for $840.00 is overdue and blocks the reprint on both apparel tickets."
     },
     {
       "test_number": 3,
@@ -94,7 +95,7 @@
         "value": 2400.0
       },
       "database_verified": true,
-      "notes": "$2,400.00 due 2026-09-02, which is what Facilities hands to Accounting."
+      "notes": "$2,400.00 due 2026-09-02, which Facilities hands to Accounting."
     },
     {
       "test_number": 4,
@@ -146,11 +147,11 @@
         "total": 3
       },
       "sql_crosscheck": {
-        "query": "SELECT COUNT(*) FROM tickets",
+        "query": "SELECT COUNT(*) FROM tickets WHERE status='open'",
         "value": 3
       },
       "database_verified": true,
-      "notes": "Boss opens every run here to decide routing."
+      "notes": "Boss opens every run with this call to decide routing."
     },
     {
       "test_number": 5,
@@ -202,7 +203,7 @@
         "value": 3400.0
       },
       "database_verified": true,
-      "notes": "Read live before any payment memo is written."
+      "notes": "Read live before any payment memo. Ticket 102 sees the post-101 balance, not the opening one."
     },
     {
       "test_number": 7,
@@ -227,7 +228,7 @@
         "value": 1
       },
       "database_verified": true,
-      "notes": "Confirms no other rent lands in the same window."
+      "notes": "Facilities checks whether another rent lands in the same window."
     },
     {
       "test_number": 8,
@@ -241,7 +242,8 @@
         "unit_cost": 22.0,
         "list_price": 58.0,
         "margin": 36.0,
-        "margin_percent": 163.63636363636365,
+        "margin_percent": 62.06896551724138,
+        "markup_percent": 163.63636363636365,
         "found": true
       },
       "sql_crosscheck": {
@@ -249,7 +251,7 @@
         "value": 22.0
       },
       "database_verified": true,
-      "notes": "$22.00 cost against $58.00 list drives the whole discount calculation."
+      "notes": "margin_percent is measured against list price, not cost. Dividing by cost gives markup (163.6%) and would badly mis-price a discount; both are now returned separately."
     }
   ],
   "summary": {
@@ -259,7 +261,7 @@
     "all_passed": true,
     "not_called": {
       "tool": "log_payment",
-      "reason": "Write tool. Calling it would insert a payments row and move real money in the working database, so it is deliberately excluded from a read-only smoke test. It is exercised end to end by POST /approve-payment during the full three-ticket run recorded in output/audit_trail.json and output/resolved_tickets.json."
+      "reason": "Write tool. Calling it here would move real money, so it is excluded from a read-only smoke test. It is exercised end to end by POST /approve-payment, which calls it over this same MCP transport during the full three-ticket run."
     }
   }
 }

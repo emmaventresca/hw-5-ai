@@ -72,7 +72,16 @@ to a **$3,400.00** checking balance with all three tickets open.
 python -m mcp_server.server
 ```
 
-Reads `data/campus_customs_new.db`. Registered for this project in `.mcp.json`.
+Reads `data/campus_customs_new.db` and speaks the MCP stdio transport. Registered for this
+project in `.mcp.json`.
+
+You do not strictly need to run this by hand: the backend spawns its own copy as a subprocess
+(`backend/mcp_client.py`). Start it yourself when you want to drive the tools directly, or to
+confirm the handshake:
+
+```bash
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}}}' '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' | python -m mcp_server.server
+```
 
 ### 3. FastAPI backend
 
@@ -116,6 +125,22 @@ $  160.00  ending balance
 ```
 
 ---
+
+## How the agents get their facts
+
+The backend is a real MCP client, not a wrapper around its own SQL. `backend/mcp_client.py`
+spawns `mcp_server/server.py`, completes an `initialize` handshake, and every figure an agent
+states — stock counts, invoice amounts, lease terms, the cash balance, pricing — comes from an
+actual `tools/call`. The `tools_used` list on each audit-trail event is collected from the calls
+that were made, so it cannot drift from what really happened.
+
+You can check this rather than take it on faith. Break `mcp_server/server.py` and
+`POST /run-ticket/101` returns **503** telling you to start the MCP server; it produces no agent
+output at all. `GET /health` and `GET /tickets` still work, because those read the board directly
+and are not agent findings.
+
+`POST /approve-payment` writes its payment row through the `log_payment` tool over the same
+transport, so a full three-ticket run exercises all nine tools.
 
 ## API routes
 
@@ -163,6 +188,7 @@ mcp_server/
   README.md
 backend/
   main.py                  FastAPI app, agent orchestration, seven routes
+  mcp_client.py            MCP stdio client the orchestration calls tools through
   models.py
   prompts/                 One instruction file per agent
 frontend/                  React + Vite + TypeScript board
